@@ -1,4 +1,9 @@
 pub mod ping;
 pub mod id;
-pub mod attachmentinput;
 pub mod wonderful_command;
+pub mod mentalhelp;
+pub mod flipcoin;
+pub mod eightball;
+pub mod copypasta;
+pub mod quote;
+pub mod roledice;

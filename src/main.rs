@@ -20,7 +20,12 @@ impl EventHandler for Handler {
             let content = match command.data.name.as_str() {
                 "ping" => commands::ping::run(&command.data.options),
                 "id" => commands::id::run(&command.data.options),
-                "attachmentinput" => commands::attachmentinput::run(&command.data.options),
+                "mentalhelp" => commands::mentalhelp::run(&command.data.options),
+                "flipcoin" => commands::flipcoin::run(&command.data.options),
+                "copypasta" => commands::copypasta::run(&command.data.options),
+                "eightball" => commands::eightball::run(&command.data.options),
+                "quote" => commands::quote::run(&command.data.options),
+                "rolldice" => commands::roledice::run(&command.data.options),
                 _ => "not implemented :(".to_string(),
             };
 
@@ -51,7 +56,12 @@ impl EventHandler for Handler {
             commands
                 .create_application_command(|command| commands::ping::register(command))
                 .create_application_command(|command| commands::id::register(command))
-                .create_application_command(|command| commands::attachmentinput::register(command))
+                .create_application_command(|command| commands::roledice::register(command))
+                .create_application_command(|command| commands::copypasta::register(command))
+                .create_application_command(|command| commands::eightball::register(command))
+                .create_application_command(|command| commands::quote::register(command))
+                .create_application_command(|command| commands::flipcoin::register(command))
+                .create_application_command(|command| commands::mentalhelp::register(command))
         }).await;
 
         println!("I now have the following guild slash commands: {:#?}", commands);
