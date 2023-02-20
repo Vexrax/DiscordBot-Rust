@@ -8,6 +8,7 @@ use serenity::model::application::interaction::{Interaction, InteractionResponse
 use serenity::model::gateway::Ready;
 use serenity::model::id::GuildId;
 use serenity::prelude::*;
+use mongodb::{bson::doc, options::ClientOptions, Client};
 
 struct Handler;
 
@@ -64,23 +65,21 @@ impl EventHandler for Handler {
                 .create_application_command(|command| commands::mentalhelp::register(command))
         }).await;
 
-        println!("I now have the following guild slash commands: {:#?}", commands);
-
         let guild_command = Command::create_global_application_command(&ctx.http, |command| {
             commands::wonderful_command::register(command)
         }).await;
 
-        println!("I created the following global slash command: {:#?}", guild_command);
     }
 }
 
 #[tokio::main]
 async fn main() {
+
     // Configure the client with your Discord bot token in the environment.
     let token = env::var("DISCORD").expect("Expected a token in the environment");
 
     // Build our client.
-    let mut client = Client::builder(token, GatewayIntents::empty())
+    let mut client = serenity::Client::builder(token, GatewayIntents::empty())
         .event_handler(Handler)
         .await
         .expect("Error creating client");
