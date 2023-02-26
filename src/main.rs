@@ -91,4 +91,12 @@ async fn main() {
     if let Err(why) = client.start().await {
         println!("Client error: {:?}", why);
     }
+
+    
+    let mongo_pass = GuildId(
+        env::var("mongopass")
+            .expect("Expected mongopass in environment")
+            .parse()
+            .expect("mongopass must be an integer"),
+    );
 }
