@@ -2,13 +2,15 @@ mod commands;
 
 use std::env;
 
+use mongodb::Collection;
 use serenity::async_trait;
 use serenity::model::application::command::Command;
 use serenity::model::application::interaction::{Interaction, InteractionResponseType};
 use serenity::model::gateway::Ready;
 use serenity::model::id::GuildId;
 use serenity::prelude::*;
-use mongodb::{bson::doc, options::ClientOptions, Client};
+use mongodb::{bson::doc, options::ClientOptions, Client, options::FindOptions};
+use futures::stream::TryStreamExt;
 
 struct Handler;
 
@@ -91,12 +93,36 @@ async fn main() {
     if let Err(why) = client.start().await {
         println!("Client error: {:?}", why);
     }
+    connectToMongoAsync();
+}
 
-    
+struct CopyPasta {
+    title: String,
+    description: String,  
+}
+
+#[tokio::main]
+async fn connectToMongoAsync() -> mongodb::error::Result<()> {
     let mongo_pass = GuildId(
         env::var("mongopass")
             .expect("Expected mongopass in environment")
             .parse()
             .expect("mongopass must be an integer"),
     );
+    
+    let mongo_connection_string = format!("mongodb+srv://Dueces:{}@cluster0-mzmgc.mongodb.net/test?retryWrites=true&w=majority", mongo_pass);
+    let client_options = ClientOptions::parse(mongo_connection_string,).await?;
+    let client = Client::with_options(client_options)?;
+    let database = client.database("Skynet");
+
+    let typed_collection = database.collection::<CopyPasta>("CopyPasta");
+
+    let query = doc! {};
+    let cursor = typed_collection.find(query, None).await?;
+    let x = cursor.deserialize_current()?;
+    println!(x.title);
+
+    // let mut cursor = typed_collection.find(None, None).await;
+    // cursor.
+    Ok(())
 }
