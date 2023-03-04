@@ -115,14 +115,14 @@ async fn connectToMongoAsync() -> mongodb::error::Result<()> {
     let client = Client::with_options(client_options)?;
     let database = client.database("Skynet");
 
-    let typed_collection = database.collection::<CopyPasta>("CopyPasta");
+    // let typed_collection = database.collection::<CopyPasta>("CopyPasta");
 
-    let query = doc! {};
-    let cursor = typed_collection.find(query, None).await?;
-    let x = cursor.deserialize_current()?;
-    println!(x.title);
+    // let query = doc! {};
+    // let cursor = typed_collection.find(query, None).await?;
+    // let x = cursor.deserialize_current()?;
+    // println!(x.title);
 
-    // let mut cursor = typed_collection.find(None, None).await;
-    // cursor.
+    // // let mut cursor = typed_collection.find(None, None).await;
+    // // cursor.
     Ok(())
 }
