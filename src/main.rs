@@ -11,6 +11,7 @@ use serenity::model::id::GuildId;
 use serenity::prelude::*;
 use mongodb::{bson::doc, options::ClientOptions, Client, options::FindOptions};
 use futures::stream::TryStreamExt;
+use serde::{Deserialize, Serialize};
 
 struct Handler;
 
@@ -25,7 +26,7 @@ impl EventHandler for Handler {
                 "id" => commands::id::run(&command.data.options),
                 "mentalhelp" => commands::mentalhelp::run(&command.data.options),
                 "flipcoin" => commands::flipcoin::run(&command.data.options),
-                "copypasta" => commands::copypasta::run(&command.data.options),
+                "copypasta" => commands::copypasta::run(&command.data.options).await,
                 "eightball" => commands::eightball::run(&command.data.options),
                 "quote" => commands::quote::run(&command.data.options),
                 "rolldice" => commands::roledice::run(&command.data.options),
@@ -76,7 +77,6 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() {
-
     // Configure the client with your Discord bot token in the environment.
     let token = env::var("DISCORD").expect("Expected a token in the environment");
 
@@ -86,6 +86,7 @@ async fn main() {
         .await
         .expect("Error creating client");
 
+
     // Finally, start a single shard, and start listening to events.
     //
     // Shards will automatically attempt to reconnect, and will perform
@@ -93,36 +94,4 @@ async fn main() {
     if let Err(why) = client.start().await {
         println!("Client error: {:?}", why);
     }
-    connectToMongoAsync();
-}
-
-struct CopyPasta {
-    title: String,
-    description: String,  
-}
-
-#[tokio::main]
-async fn connectToMongoAsync() -> mongodb::error::Result<()> {
-    let mongo_pass = GuildId(
-        env::var("mongopass")
-            .expect("Expected mongopass in environment")
-            .parse()
-            .expect("mongopass must be an integer"),
-    );
-    
-    let mongo_connection_string = format!("mongodb+srv://Dueces:{}@cluster0-mzmgc.mongodb.net/test?retryWrites=true&w=majority", mongo_pass);
-    let client_options = ClientOptions::parse(mongo_connection_string,).await?;
-    let client = Client::with_options(client_options)?;
-    let database = client.database("Skynet");
-
-    // let typed_collection = database.collection::<CopyPasta>("CopyPasta");
-
-    // let query = doc! {};
-    // let cursor = typed_collection.find(query, None).await?;
-    // let x = cursor.deserialize_current()?;
-    // println!(x.title);
-
-    // // let mut cursor = typed_collection.find(None, None).await;
-    // // cursor.
-    Ok(())
 }
