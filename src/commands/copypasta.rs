@@ -9,6 +9,7 @@ use serenity::model::application::interaction::application_command::ApplicationC
 use serenity::model::application::interaction::{Interaction, InteractionResponseType};
 use serenity::model::gateway::Ready;
 use serenity::model::id::GuildId;
+use serenity::model::id::ChannelId;
 use serenity::prelude::*;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -18,28 +19,38 @@ struct CopyPasta {
 }
 
 /**
- * TODO: Figure out how to do async functions with run
  * TODO: Return all copy pastas
  * TODO: format the copypastas nicely with embeds
  */
 pub async fn run(_options: &[CommandDataOption], ctx: &Context, interaction: &Interaction, command: &ApplicationCommandInteraction) {
-    let retpasta: String;
-    match get_copy_pastas().await {
-        Ok(pasta) => retpasta = pasta.title,
-        Err(err) => retpasta = "something bad happened".to_string()
-    }
-
-    println!("{}", retpasta);
     if let Err(why) = command
     .create_interaction_response(&ctx.http, |response| {
         response
             .kind(InteractionResponseType::ChannelMessageWithSource)
-            .interaction_response_data(|message| message.content(format!("Pasta {}", retpasta)))
+            .interaction_response_data(|message| message.content("Sending Pastas".to_string()))
     })
     .await
     {
         // TODO something bad happened
     }
+
+    let retpasta: CopyPasta;
+
+    match get_copy_pastas().await {
+        Ok(pasta) => retpasta = pasta,
+        Err(err) => {
+            retpasta = CopyPasta {
+                title: "title".to_string(),
+                description: "description".to_string()
+            }
+        }
+    }
+
+    let _ = command.channel_id.send_message(&ctx.http, |m| {
+        m.embed(|e| e.title(retpasta.title)
+                                        .description(retpasta.description)                                    
+                                    )
+    }).await;
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
