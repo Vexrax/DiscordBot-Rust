@@ -1,8 +1,10 @@
 use serenity::builder::CreateApplicationCommand;
 use serenity::model::prelude::interaction::application_command::CommandDataOption;
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::interaction::{Interaction, InteractionResponseType};
+use serenity::prelude::*;
 
-pub fn run(_options: &[CommandDataOption]) -> String {
-    return "This function is unimplemented".to_string();
+pub async fn run(_options: &[CommandDataOption], ctx: &Context, interaction: &Interaction, command: &ApplicationCommandInteraction) {
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

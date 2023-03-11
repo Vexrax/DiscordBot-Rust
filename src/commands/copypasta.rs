@@ -5,7 +5,11 @@ use serenity::model::prelude::interaction::application_command::CommandDataOptio
 use futures::stream::TryStreamExt;
 use serde::{Deserialize, Serialize};
 use mongodb::{bson::doc, options::ClientOptions, Client, options::FindOptions, Database};
-
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::interaction::{Interaction, InteractionResponseType};
+use serenity::model::gateway::Ready;
+use serenity::model::id::GuildId;
+use serenity::prelude::*;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct CopyPasta {
@@ -18,13 +22,24 @@ struct CopyPasta {
  * TODO: Return all copy pastas
  * TODO: format the copypastas nicely with embeds
  */
-pub async fn run(_options: &[CommandDataOption]) -> String {
+pub async fn run(_options: &[CommandDataOption], ctx: &Context, interaction: &Interaction, command: &ApplicationCommandInteraction) {
     let retpasta: String;
     match get_copy_pastas().await {
         Ok(pasta) => retpasta = pasta.title,
         Err(err) => retpasta = "something bad happened".to_string()
     }
-    return format!("Pasta {}", retpasta);
+
+    println!("{}", retpasta);
+    if let Err(why) = command
+    .create_interaction_response(&ctx.http, |response| {
+        response
+            .kind(InteractionResponseType::ChannelMessageWithSource)
+            .interaction_response_data(|message| message.content(format!("Pasta {}", retpasta)))
+    })
+    .await
+    {
+        // TODO something bad happened
+    }
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

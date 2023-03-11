@@ -5,6 +5,11 @@ use serenity::model::prelude::interaction::application_command::{
     CommandDataOptionValue,
 };
 use rand::Rng; 
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::interaction::{Interaction, InteractionResponseType};
+use serenity::model::gateway::Ready;
+use serenity::model::id::GuildId;
+use serenity::prelude::*;
 
 const RESPONSE_OPTIONS: &[&str] = &[
     "As I see it, yes.",
@@ -21,7 +26,7 @@ const RESPONSE_OPTIONS: &[&str] = &[
     "Outlook not so good."
 ];
 
-pub fn run(options: &[CommandDataOption]) -> String {
+pub async fn run(options: &[CommandDataOption], ctx: &Context, interaction: &Interaction, command: &ApplicationCommandInteraction) {
     let option = options
         .get(0)
         .expect("Expected user option")
@@ -30,10 +35,36 @@ pub fn run(options: &[CommandDataOption]) -> String {
         .expect("Expected user object");
 
     if let CommandDataOptionValue::String(question) = option {
-        return RESPONSE_OPTIONS[rand::thread_rng().gen_range(0..RESPONSE_OPTIONS.len())].to_string();
+        if let Err(why) = command
+        .create_interaction_response(&ctx.http, |response| {
+            response
+                .kind(InteractionResponseType::ChannelMessageWithSource)
+                .interaction_response_data(|message| message.content(RESPONSE_OPTIONS[rand::thread_rng().gen_range(0..RESPONSE_OPTIONS.len())].to_string()))
+        })
+        .await
+        {
+            // TODO something bad happened
+        }
     } else {
-        return "Please ask a question".to_string();
+        if let Err(why) = command
+        .create_interaction_response(&ctx.http, |response| {
+            response
+                .kind(InteractionResponseType::ChannelMessageWithSource)
+                .interaction_response_data(|message| message.content("Please ask a question".to_string()))
+        })
+        .await
+        {
+            // TODO something bad happened
+        }
     }
+
+
+
+
+
+
+
+    
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

@@ -5,6 +5,7 @@ use std::env;
 use mongodb::Collection;
 use serenity::async_trait;
 use serenity::model::application::command::Command;
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::model::application::interaction::{Interaction, InteractionResponseType};
 use serenity::model::gateway::Ready;
 use serenity::model::id::GuildId;
@@ -18,31 +19,21 @@ struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
-        if let Interaction::ApplicationCommand(command) = interaction {
+        if let Interaction::ApplicationCommand(command) = &interaction {
             println!("Received command interaction: {:#?}", command);
 
             let content = match command.data.name.as_str() {
-                "ping" => commands::ping::run(&command.data.options),
-                "id" => commands::id::run(&command.data.options),
-                "mentalhelp" => commands::mentalhelp::run(&command.data.options),
-                "flipcoin" => commands::flipcoin::run(&command.data.options),
-                "copypasta" => commands::copypasta::run(&command.data.options).await,
-                "eightball" => commands::eightball::run(&command.data.options),
-                "quote" => commands::quote::run(&command.data.options),
-                "rolldice" => commands::roledice::run(&command.data.options),
-                _ => "not implemented :(".to_string(),
-            };
+                "ping" => commands::ping::run(&command.data.options, &ctx, &interaction, &command).await,
+                "id" => commands::id::run(&command.data.options, &ctx, &interaction, &command).await,
+                "mentalhelp" => commands::mentalhelp::run(&command.data.options, &ctx, &interaction, &command).await,
+                "flipcoin" => commands::flipcoin::run(&command.data.options, &ctx, &interaction, &command).await,
+                "copypasta" => commands::copypasta::run(&command.data.options, &ctx, &interaction, &command).await,
+                "eightball" => commands::eightball::run(&command.data.options, &ctx, &interaction, &command).await,
+                "quote" => commands::quote::run(&command.data.options, &ctx, &interaction, &command).await,
+                "rolldice" => commands::roledice::run(&command.data.options, &ctx, &interaction, &command).await,
+                _ => (),
 
-            if let Err(why) = command
-                .create_interaction_response(&ctx.http, |response| {
-                    response
-                        .kind(InteractionResponseType::ChannelMessageWithSource)
-                        .interaction_response_data(|message| message.content(content))
-                })
-                .await
-            {
-                println!("Cannot respond to slash command: {}", why);
-            }
+            };
         }
     }
 
