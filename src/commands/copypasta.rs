@@ -38,9 +38,9 @@ async fn get_copy_pastas() -> mongodb::error::Result<CopyPasta> {
     let typed_collection = database.collection::<CopyPasta>("CopyPasta");
 
     let cursor = typed_collection.find(None, None).await?;
-    let x = cursor.deserialize_current()?;
+    let pasta = cursor.deserialize_current()?;
 
-    Ok(x)
+    Ok(pasta)
 }
 
 async fn get_mongo_client() -> mongodb::error::Result<Database> {
