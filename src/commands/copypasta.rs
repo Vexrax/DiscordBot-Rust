@@ -19,8 +19,7 @@ struct CopyPasta {
 }
 
 /**
- * TODO: Return all copy pastas
- * TODO: format the copypastas nicely with embeds
+ * TODO: Refector to remove duped code
  */
 pub async fn run(_options: &[CommandDataOption], ctx: &Context, interaction: &Interaction, command: &ApplicationCommandInteraction) {
     if let Err(why) = command
@@ -34,39 +33,42 @@ pub async fn run(_options: &[CommandDataOption], ctx: &Context, interaction: &In
         // TODO something bad happened
     }
 
-    let retpasta: CopyPasta;
+    let all_copy_pastas: Vec<CopyPasta>;
 
     match get_copy_pastas().await {
-        Ok(pasta) => retpasta = pasta,
+        Ok(pasta) => all_copy_pastas = pasta,
         Err(err) => {
-            retpasta = CopyPasta {
-                title: "title".to_string(),
-                description: "description".to_string()
-            }
+            all_copy_pastas = vec! [
+                CopyPasta {
+                    title: "Something went wrong".to_string(),
+                    description: err.to_string()
+                }
+            ]
         }
     }
 
-    let _ = command.channel_id.send_message(&ctx.http, |m| {
-        m.embed(|e| e.title(retpasta.title)
-                                        .description(retpasta.description)                                    
-                                    )
-    }).await;
+    for copypasta in all_copy_pastas {
+        let _ = command.channel_id.send_message(&ctx.http, |m| {
+            m.embed(|e| e.title(copypasta.title)
+                                            .description(copypasta.description)                                    
+                                        )
+        }).await;
+    };
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     command.name("copypasta").description("Prints out the current pastas")
 }
 
-async fn get_copy_pastas() -> mongodb::error::Result<CopyPasta> {
+async fn get_copy_pastas() -> mongodb::error::Result<Vec<CopyPasta>> {
     
     let database = get_mongo_client().await?;
 
     let typed_collection = database.collection::<CopyPasta>("CopyPasta");
 
     let cursor = typed_collection.find(None, None).await?;
-    let pasta = cursor.deserialize_current()?;
-
-    Ok(pasta)
+   
+    Ok(cursor.try_collect().await.unwrap_or_else(|_| vec![]))
 }
 
 async fn get_mongo_client() -> mongodb::error::Result<Database> {
