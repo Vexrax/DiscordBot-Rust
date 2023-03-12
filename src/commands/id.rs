@@ -5,12 +5,11 @@ use serenity::model::prelude::interaction::application_command::{
     CommandDataOptionValue,
 };
 use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
-use serenity::model::application::interaction::{Interaction, InteractionResponseType};
-use serenity::model::gateway::Ready;
-use serenity::model::id::GuildId;
 use serenity::prelude::*;
 
-pub async fn run(options: &[CommandDataOption], ctx: &Context, interaction: &Interaction, command: &ApplicationCommandInteraction) {
+use crate::utils::discord_message::respond_to_interaction;
+
+pub async fn run(options: &[CommandDataOption], ctx: &Context, command: &ApplicationCommandInteraction) {
     let option = options
         .get(0)
         .expect("Expected user option")
@@ -18,11 +17,12 @@ pub async fn run(options: &[CommandDataOption], ctx: &Context, interaction: &Int
         .as_ref()
         .expect("Expected user object");
 
-    // if let CommandDataOptionValue::User(user, _member) = option {
-    //     format!("{}'s id is {}", user.tag(), user.id)
-    // } else {
-    //     "Please provide a valid user".to_string()
-    // }
+
+    if let CommandDataOptionValue::User(user, _member) = option {
+        respond_to_interaction(&ctx, &command,  &format!("{}'s id is {}", user.tag(), user.id)).await;
+    } else {
+        respond_to_interaction(&ctx, &command,  &  "Please provide a valid user".to_string()).await;
+    }
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

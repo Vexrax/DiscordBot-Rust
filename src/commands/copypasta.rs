@@ -6,7 +6,6 @@ use futures::stream::TryStreamExt;
 use serde::{Deserialize, Serialize};
 use mongodb::{bson::doc};
 use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
-use serenity::model::application::interaction::{Interaction};
 use serenity::prelude::*;
 
 use crate::utils::discord_message::respond_to_interaction;
@@ -18,7 +17,7 @@ struct CopyPasta {
     description: String,  
 }
 
-pub async fn run(_options: &[CommandDataOption], ctx: &Context, interaction: &Interaction, command: &ApplicationCommandInteraction) {
+pub async fn run(_options: &[CommandDataOption], ctx: &Context, command: &ApplicationCommandInteraction) {
     respond_to_interaction(&ctx, &command, &"Sending Pastas".to_string()).await;
 
     let all_copy_pastas: Vec<CopyPasta>;

@@ -1,6 +1,6 @@
 use std::env;
 
-use mongodb::{options::ClientOptions, Client, options::FindOptions, Database};
+use mongodb::{options::ClientOptions, Client, Database};
 
 
 pub async fn get_mongo_client() -> mongodb::error::Result<Database> {

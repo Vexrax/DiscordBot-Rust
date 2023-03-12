@@ -19,14 +19,14 @@ impl EventHandler for Handler {
             //println!("Received command interaction: {:#?}", command);
 
             match command.data.name.as_str() {
-                "ping" => commands::ping::run(&command.data.options, &ctx, &interaction, &command).await,
-                "id" => commands::id::run(&command.data.options, &ctx, &interaction, &command).await,
-                "mentalhelp" => commands::mentalhelp::run(&command.data.options, &ctx, &interaction, &command).await,
-                "flipcoin" => commands::flipcoin::run(&command.data.options, &ctx, &interaction, &command).await,
-                "copypasta" => commands::copypasta::run(&command.data.options, &ctx, &interaction, &command).await,
                 "eightball" => commands::eightball::run(&command.data.options, &ctx, &interaction, &command).await,
                 "quote" => commands::quote::run(&command.data.options, &ctx, &interaction, &command).await,
-                "rolldice" => commands::roledice::run(&command.data.options, &ctx, &interaction, &command).await,
+                "ping" => commands::ping::run(&command.data.options, &ctx, &command).await,
+                "id" => commands::id::run(&command.data.options, &ctx, &command).await,
+                "mentalhelp" => commands::mentalhelp::run(&command.data.options, &ctx, &command).await,
+                "flipcoin" => commands::flipcoin::run(&command.data.options, &ctx, &command).await,
+                "copypasta" => commands::copypasta::run(&command.data.options, &ctx, &command).await,
+                "rolldice" => commands::roledice::run(&command.data.options, &ctx, &command).await,
                 _ => (),
             };
         }
