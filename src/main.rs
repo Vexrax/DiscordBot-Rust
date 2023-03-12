@@ -1,18 +1,14 @@
 mod commands;
+mod utils;
 
 use std::env;
 
-use mongodb::Collection;
 use serenity::async_trait;
 use serenity::model::application::command::Command;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
-use serenity::model::application::interaction::{Interaction, InteractionResponseType};
+use serenity::model::application::interaction::{Interaction};
 use serenity::model::gateway::Ready;
 use serenity::model::id::GuildId;
 use serenity::prelude::*;
-use mongodb::{bson::doc, options::ClientOptions, Client, options::FindOptions};
-use futures::stream::TryStreamExt;
-use serde::{Deserialize, Serialize};
 
 struct Handler;
 
@@ -20,9 +16,9 @@ struct Handler;
 impl EventHandler for Handler {
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = &interaction {
-            println!("Received command interaction: {:#?}", command);
+            //println!("Received command interaction: {:#?}", command);
 
-            let content = match command.data.name.as_str() {
+            match command.data.name.as_str() {
                 "ping" => commands::ping::run(&command.data.options, &ctx, &interaction, &command).await,
                 "id" => commands::id::run(&command.data.options, &ctx, &interaction, &command).await,
                 "mentalhelp" => commands::mentalhelp::run(&command.data.options, &ctx, &interaction, &command).await,
@@ -32,7 +28,6 @@ impl EventHandler for Handler {
                 "quote" => commands::quote::run(&command.data.options, &ctx, &interaction, &command).await,
                 "rolldice" => commands::roledice::run(&command.data.options, &ctx, &interaction, &command).await,
                 _ => (),
-
             };
         }
     }

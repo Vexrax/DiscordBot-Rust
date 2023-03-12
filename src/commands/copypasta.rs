@@ -1,16 +1,16 @@
-use std::env;
+use std::error::Error;
 
 use serenity::builder::CreateApplicationCommand;
 use serenity::model::prelude::interaction::application_command::CommandDataOption;
 use futures::stream::TryStreamExt;
 use serde::{Deserialize, Serialize};
-use mongodb::{bson::doc, options::ClientOptions, Client, options::FindOptions, Database};
+use mongodb::{bson::doc};
 use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
-use serenity::model::application::interaction::{Interaction, InteractionResponseType};
-use serenity::model::gateway::Ready;
-use serenity::model::id::GuildId;
-use serenity::model::id::ChannelId;
+use serenity::model::application::interaction::{Interaction};
 use serenity::prelude::*;
+
+use crate::utils::discord_message::respond_to_interaction;
+use crate::utils::mongo::get_mongo_client;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct CopyPasta {
@@ -18,33 +18,14 @@ struct CopyPasta {
     description: String,  
 }
 
-/**
- * TODO: Refector to remove duped code
- */
 pub async fn run(_options: &[CommandDataOption], ctx: &Context, interaction: &Interaction, command: &ApplicationCommandInteraction) {
-    if let Err(why) = command
-    .create_interaction_response(&ctx.http, |response| {
-        response
-            .kind(InteractionResponseType::ChannelMessageWithSource)
-            .interaction_response_data(|message| message.content("Sending Pastas".to_string()))
-    })
-    .await
-    {
-        // TODO something bad happened
-    }
+    respond_to_interaction(&ctx, &command, &"Sending Pastas".to_string()).await;
 
     let all_copy_pastas: Vec<CopyPasta>;
 
     match get_copy_pastas().await {
         Ok(pasta) => all_copy_pastas = pasta,
-        Err(err) => {
-            all_copy_pastas = vec! [
-                CopyPasta {
-                    title: "Something went wrong".to_string(),
-                    description: err.to_string()
-                }
-            ]
-        }
+        Err(err) => all_copy_pastas = vec! [get_error_copypasta(&err)]
     }
 
     for copypasta in all_copy_pastas {
@@ -71,12 +52,9 @@ async fn get_copy_pastas() -> mongodb::error::Result<Vec<CopyPasta>> {
     Ok(cursor.try_collect().await.unwrap_or_else(|_| vec![]))
 }
 
-async fn get_mongo_client() -> mongodb::error::Result<Database> {
-    let mongo_pass = env::var("MONGOPASSWORD").expect("Expected mongopass in environment");
-    
-    let mongo_connection_string = format!("mongodb+srv://Dueces:{}@cluster0-mzmgc.mongodb.net/test?retryWrites=true&w=majority", mongo_pass);
-    let client_options = ClientOptions::parse(mongo_connection_string,).await?;
-    let client = Client::with_options(client_options)?;
-    let database = client.database("Skynet");
-    Ok(database)
+fn get_error_copypasta(err: &dyn Error) -> CopyPasta {
+    return CopyPasta {
+        title: "Something went wrong".to_string(),
+        description: err.to_string()
+    }
 }

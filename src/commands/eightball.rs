@@ -11,6 +11,9 @@ use serenity::model::gateway::Ready;
 use serenity::model::id::GuildId;
 use serenity::prelude::*;
 
+use crate::utils::discord_message::respond_to_interaction;
+
+
 const RESPONSE_OPTIONS: &[&str] = &[
     "As I see it, yes.",
     "Ask again later",
@@ -56,15 +59,7 @@ pub async fn run(options: &[CommandDataOption], ctx: &Context, interaction: &Int
         {
             // TODO something bad happened
         }
-    }
-
-
-
-
-
-
-
-    
+    }    
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
