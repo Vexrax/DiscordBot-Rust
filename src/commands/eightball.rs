@@ -7,8 +7,6 @@ use serenity::model::prelude::interaction::application_command::{
 use rand::Rng; 
 use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::model::application::interaction::{Interaction, InteractionResponseType};
-use serenity::model::gateway::Ready;
-use serenity::model::id::GuildId;
 use serenity::prelude::*;
 
 use crate::utils::discord_message::respond_to_interaction;

@@ -5,6 +5,10 @@ use serenity::model::application::interaction::{Interaction, InteractionResponse
 use serenity::prelude::*;
 
 pub async fn run(_options: &[CommandDataOption], ctx: &Context, interaction: &Interaction, command: &ApplicationCommandInteraction) {
+    // TODO quote
+    // TODO quoteadd
+    // TODO quotefrom
+    // TODO backupQuotes
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
