@@ -36,27 +36,11 @@ pub async fn run(options: &[CommandDataOption], ctx: &Context, interaction: &Int
         .expect("Expected user object");
 
     if let CommandDataOptionValue::String(question) = option {
-        if let Err(why) = command
-        .create_interaction_response(&ctx.http, |response| {
-            response
-                .kind(InteractionResponseType::ChannelMessageWithSource)
-                .interaction_response_data(|message| message.content(RESPONSE_OPTIONS[rand::thread_rng().gen_range(0..RESPONSE_OPTIONS.len())].to_string()))
-        })
-        .await
-        {
-            // TODO something bad happened
-        }
+        let response = RESPONSE_OPTIONS[rand::thread_rng().gen_range(0..RESPONSE_OPTIONS.len())].to_string();
+        // TODO add the question in here 
+        respond_to_interaction(&ctx, &command, &response).await;  
     } else {
-        if let Err(why) = command
-        .create_interaction_response(&ctx.http, |response| {
-            response
-                .kind(InteractionResponseType::ChannelMessageWithSource)
-                .interaction_response_data(|message| message.content("Please ask a question".to_string()))
-        })
-        .await
-        {
-            // TODO something bad happened
-        }
+        respond_to_interaction(&ctx, &command, &"Please ask a question".to_string()).await;  
     }    
 }
 
