@@ -6,7 +6,6 @@ use serenity::model::prelude::interaction::application_command::{
 };
 use rand::Rng; 
 use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
-use serenity::model::application::interaction::{Interaction, InteractionResponseType};
 use serenity::prelude::*;
 
 use crate::utils::discord_message::respond_to_interaction;
@@ -27,7 +26,7 @@ const RESPONSE_OPTIONS: &[&str] = &[
     "Outlook not so good."
 ];
 
-pub async fn run(options: &[CommandDataOption], ctx: &Context, interaction: &Interaction, command: &ApplicationCommandInteraction) {
+pub async fn run(options: &[CommandDataOption], ctx: &Context, command: &ApplicationCommandInteraction) {
     let option = options
         .get(0)
         .expect("Expected user option")

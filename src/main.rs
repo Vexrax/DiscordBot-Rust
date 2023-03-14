@@ -19,7 +19,7 @@ impl EventHandler for Handler {
             //println!("Received command interaction: {:#?}", command);
 
             match command.data.name.as_str() {
-                "eightball" => commands::eightball::run(&command.data.options, &ctx, &interaction, &command).await,
+                "eightball" => commands::eightball::run(&command.data.options, &ctx, &command).await,
                 "quote" => commands::quote::run(&command.data.options, &ctx, &interaction, &command).await,
                 "ping" => commands::ping::run(&command.data.options, &ctx, &command).await,
                 "id" => commands::id::run(&command.data.options, &ctx, &command).await,

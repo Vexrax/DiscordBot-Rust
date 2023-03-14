@@ -9,7 +9,7 @@ use crate::utils::discord_message::respond_to_interaction;
 pub async fn run(_options: &[CommandDataOption], ctx: &Context, command: &ApplicationCommandInteraction) {
     let num: i32 = rand::thread_rng().gen_range(0..2);
     
-    let mut result = "";
+    let result;
     if num == 1 {
         result = "Heads";
     } else {
