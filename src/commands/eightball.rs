@@ -21,8 +21,8 @@ const RESPONSE_OPTIONS: &[&str] = &[
     "It is certain.",
     "It is decidedly so.",
     "Yes – definitely",
-    " Without a doubt.",
-    " Outlook good.",
+    "Without a doubt.",
+    "Outlook good.",
     "Outlook not so good."
 ];
 
