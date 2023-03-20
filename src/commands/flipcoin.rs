@@ -11,9 +11,9 @@ pub async fn run(_options: &[CommandDataOption], ctx: &Context, command: &Applic
     
     let result;
     if num == 1 {
-        result = "Heads";
+        result = "heads";
     } else {
-        result = "Tails"
+        result = "tails"
     }
 
     respond_to_interaction(&ctx, &command, &format!("The coin landed on {}", result)).await;
