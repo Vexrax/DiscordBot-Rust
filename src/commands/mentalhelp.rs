@@ -10,5 +10,5 @@ pub async fn run(_options: &[CommandDataOption], ctx: &Context, command: &Applic
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    command.name("mentalhelp").description("Used to give mental help")
+    command.name("mentalhelp").description("Used to give mental help.")
 }
