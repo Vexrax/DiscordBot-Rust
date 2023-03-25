@@ -5,6 +5,7 @@ use serenity::model::application::interaction::{Interaction, InteractionResponse
 use serenity::prelude::*;
 
 pub async fn run(_options: &[CommandDataOption], ctx: &Context, interaction: &Interaction, command: &ApplicationCommandInteraction) {
+    todo!()
     // TODO quote
     // TODO quoteadd
     // TODO quotefrom
