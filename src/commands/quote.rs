@@ -16,7 +16,9 @@ use serenity::model::prelude::interaction::application_command::{
 };
 use crate::utils::discord_message::respond_to_interaction;
 use crate::utils::mongo::get_mongo_client;
+use crate::utils::string_utils::capitalize;
 
+// TODO commonize this with the one in quoteadd
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct Quote {
     quote: String,
@@ -100,14 +102,6 @@ async fn get_quotes(filter: Document) -> mongodb::error::Result<Vec<Quote>> {
     let typed_collection = database.collection::<Quote>("Quotes");
     let cursor = typed_collection.find(filter, None).await?;
     Ok(cursor.try_collect().await.unwrap_or_else(|_| vec![]))
-}
-
-pub fn capitalize(s: &str) -> String {
-    let mut c = s.chars();
-    match c.next() {
-        None => String::new(),
-        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
-    }
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

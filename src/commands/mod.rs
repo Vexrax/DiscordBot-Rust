@@ -7,3 +7,4 @@ pub mod eightball;
 pub mod copypasta;
 pub mod quote;
 pub mod roledice;
+pub mod quoteadd;

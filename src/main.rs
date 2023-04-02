@@ -21,6 +21,7 @@ impl EventHandler for Handler {
             match command.data.name.as_str() {
                 "eightball" => commands::eightball::run(&command.data.options, &ctx, &command).await,
                 "quote" => commands::quote::run(&command.data.options, &ctx, &interaction, &command).await,
+                "quoteadd" => commands::quoteadd::run(&command.data.options, &ctx, &interaction, &command).await,
                 "ping" => commands::ping::run(&command.data.options, &ctx, &command).await,
                 "id" => commands::id::run(&command.data.options, &ctx, &command).await,
                 "mentalhelp" => commands::mentalhelp::run(&command.data.options, &ctx, &command).await,
@@ -50,6 +51,7 @@ impl EventHandler for Handler {
                 .create_application_command(|command| commands::copypasta::register(command))
                 .create_application_command(|command| commands::eightball::register(command))
                 .create_application_command(|command| commands::quote::register(command))
+                .create_application_command(|command| commands::quoteadd::register(command))
                 .create_application_command(|command| commands::flipcoin::register(command))
                 .create_application_command(|command| commands::mentalhelp::register(command))
         }).await;
