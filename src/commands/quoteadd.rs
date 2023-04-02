@@ -32,23 +32,24 @@ struct Quote {
 
 pub async fn run(_options: &[CommandDataOption], ctx: &Context, interaction: &Interaction, command: &ApplicationCommandInteraction) {
 
-    let quote_option = _options.get(0)
-                                                  .expect("Expected quote to be specified")
-                                                  .resolved
-                                                  .as_ref()
-                                                  .expect("Expected string object");
+    let quote_option = _options .get(0)
+                                .expect("Expected quote to be specified")
+                                .resolved
+                                .as_ref()
+                                .expect("Expected string object");
     let author_option = _options.get(1)
-                                                .expect("Expected author to be specified")
-                                                .resolved
-                                                .as_ref()
-                                                .expect("Expected string object");
+                                .expect("Expected author to be specified")
+                                .resolved
+                                .as_ref()
+                                .expect("Expected string object");
     let year_option = _options.get(2)
-                                            .expect("Expected year to be specified")
-                                            .resolved
-                                            .as_ref()
-                                            .expect("Expected string object");
+                                .expect("Expected year to be specified")
+                                .resolved
+                                .as_ref()
+                                .expect("Expected string object");
 
     if let Some(member) = &command.member {
+        // Vexrax userId
         if member.user.id != 188313190214533120 {
             respond_to_interaction(&ctx, &command, &format!("No.").to_string()).await;
             return;

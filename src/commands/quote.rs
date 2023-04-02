@@ -43,9 +43,6 @@ pub async fn run(_options: &[CommandDataOption], ctx: &Context, interaction: &In
     if let CommandDataOptionValue::String(name) = option {
         get_quote_from(name, ctx, command).await;
     } 
-    
-    // TODO quoteadd
-    // TODO backupQuotes
 }
 
 async fn get_quote_from(name: &String, ctx: &Context, command: &ApplicationCommandInteraction) {
