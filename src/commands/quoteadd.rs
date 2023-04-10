@@ -51,7 +51,7 @@ pub async fn run(_options: &[CommandDataOption], ctx: &Context, interaction: &In
     if let Some(member) = &command.member {
         // Vexrax userId
         if member.user.id != 188313190214533120 {
-            respond_to_interaction(&ctx, &command, &format!("No.").to_string()).await;
+            respond_to_interaction(&ctx, &command, &format!("No perms").to_string()).await;
             return;
         }
     }
