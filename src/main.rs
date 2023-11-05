@@ -43,7 +43,7 @@ impl EventHandler for Handler {
                 .expect("GUILD_ID must be an integer"),
         );
 
-        let commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
+        let _commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
             commands
                 .create_application_command(|command| commands::ping::register(command))
                 .create_application_command(|command| commands::id::register(command))
@@ -56,7 +56,7 @@ impl EventHandler for Handler {
                 .create_application_command(|command| commands::mentalhelp::register(command))
         }).await;
 
-        let guild_command = Command::create_global_application_command(&ctx.http, |command| {
+        let _guild_command = Command::create_global_application_command(&ctx.http, |command| {
             commands::wonderful_command::register(command)
         }).await;
 

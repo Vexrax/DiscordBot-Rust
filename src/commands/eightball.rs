@@ -34,7 +34,7 @@ pub async fn run(options: &[CommandDataOption], ctx: &Context, command: &Applica
         .as_ref()
         .expect("Expected user object");
 
-    if let CommandDataOptionValue::String(question) = option {
+    if let CommandDataOptionValue::String(_question) = option {
         let response = RESPONSE_OPTIONS[rand::thread_rng().gen_range(0..RESPONSE_OPTIONS.len())].to_string();
         // TODO add the question in here 
         respond_to_interaction(&ctx, &command, &response).await;  

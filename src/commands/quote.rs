@@ -3,9 +3,9 @@ use rand::seq::SliceRandom;
 use serenity::builder::CreateApplicationCommand;
 use futures::stream::TryStreamExt;
 use serde::{Deserialize, Serialize};
-use mongodb::{bson::doc};
+use mongodb::bson::doc;
 use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
-use serenity::model::application::interaction::{Interaction};
+use serenity::model::application::interaction::Interaction;
 use serenity::model::prelude::ChannelId;
 use serenity::prelude::*;
 use serenity::model::prelude::command::CommandOptionType;
@@ -27,7 +27,7 @@ struct Quote {
     context: String,  
 }
 
-pub async fn run(_options: &[CommandDataOption], ctx: &Context, interaction: &Interaction, command: &ApplicationCommandInteraction) {
+pub async fn run(_options: &[CommandDataOption], ctx: &Context, _interaction: &Interaction, command: &ApplicationCommandInteraction) {
 
     if _options.get(0).is_none() {
         get_random_quote(ctx, command).await;
@@ -52,7 +52,10 @@ async fn get_quote_from(name: &String, ctx: &Context, command: &ApplicationComma
 
     match get_quotes(doc! { "author": capitalize(name) }).await {
         Ok(quote) => all_quotes = quote,
-        Err(err) => all_quotes = vec! []
+        Err(err) => {
+            all_quotes = vec! [];
+            eprintln!("Error occured while getting quote from, error: {}", err)
+        }
     }
 
     send_quote_in_channel(ctx, &command.channel_id, all_quotes).await
@@ -66,7 +69,10 @@ async fn get_random_quote(ctx: &Context, command: &ApplicationCommandInteraction
 
     match get_quotes(doc! {  }).await {
         Ok(quote) => all_quotes = quote,
-        Err(err) => all_quotes = vec! []
+        Err(err) => {
+            all_quotes = vec! [];
+            eprintln!("Error occured while getting qute {}", err)
+        } 
     }
 
     send_quote_in_channel(ctx, &command.channel_id, all_quotes).await

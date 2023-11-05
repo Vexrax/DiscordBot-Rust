@@ -1,13 +1,9 @@
-use mongodb::{Database, Collection};
-use mongodb::bson::Document;
-use rand::seq::SliceRandom;
+use mongodb::Collection;
 use serenity::builder::CreateApplicationCommand;
-use futures::stream::TryStreamExt;
 use serde::{Deserialize, Serialize};
-use mongodb::{bson::doc};
+use mongodb::bson::doc;
 use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::model::application::interaction::{Interaction};
-use serenity::model::prelude::ChannelId;
 use serenity::prelude::*;
 use serenity::model::prelude::command::CommandOptionType;
 use serenity::model::prelude::interaction::application_command::{
@@ -30,7 +26,7 @@ struct Quote {
     context: String,  
 }
 
-pub async fn run(_options: &[CommandDataOption], ctx: &Context, interaction: &Interaction, command: &ApplicationCommandInteraction) {
+pub async fn run(_options: &[CommandDataOption], ctx: &Context, _interaction: &Interaction, command: &ApplicationCommandInteraction) {
 
     let quote_option = _options .get(0)
                                 .expect("Expected quote to be specified")
@@ -73,12 +69,14 @@ pub async fn run(_options: &[CommandDataOption], ctx: &Context, interaction: &In
 
     match database_result {
         Ok(db) => add_quote_to_collection(db.collection::<Quote>("Quotes"), quote_to_add).await,
-        Err(err) => {}
+        Err(err) => {
+          eprintln!("Error: something went wrong when trying to add a quote to the DB: {}", err);  
+        }
     }
 }
 
 async fn add_quote_to_collection(collection: Collection<Quote>, quote_to_add: Quote){
-    collection.insert_one(quote_to_add, None).await;
+    collection.insert_one(quote_to_add, None).await.ok();
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
