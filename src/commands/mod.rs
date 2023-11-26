@@ -9,3 +9,4 @@ pub mod quote;
 pub mod roledice;
 pub mod quoteadd;
 pub mod gamestatus;
+pub mod reminders;

@@ -31,6 +31,7 @@ impl EventHandler for Handler {
                 "copypasta" => commands::copypasta::run(&command.data.options, &ctx, &command).await,
                 "rolldice" => commands::roledice::run(&command.data.options, &ctx, &command).await,
                 "gamestatus" => commands::gamestatus::run(&command.data.options, &ctx, &command).await,
+                "remindme" => commands::reminders::run(&command.data.options, &ctx, &command).await,
                 _ => (),
             };
         }
@@ -59,6 +60,8 @@ impl EventHandler for Handler {
                 .create_application_command(|command| commands::quoteadd::register(command))
                 .create_application_command(|command| commands::flipcoin::register(command))
                 .create_application_command(|command| commands::mentalhelp::register(command))
+                .create_application_command(|command| commands::gamestatus::register(command)) // TODO Figure out why this isnt registering
+                .create_application_command(|command| commands::reminders::register(command)) // TODO Figure out why this isnt registering
         }).await;
 
         let _guild_command = Command::create_global_application_command(&ctx.http, |command| {
