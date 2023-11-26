@@ -9,6 +9,8 @@ use serenity::model::application::interaction::{Interaction};
 use serenity::model::gateway::Ready;
 use serenity::model::id::GuildId;
 use serenity::prelude::*;
+use serenity::model::gateway::Activity;
+use serenity::model::user::OnlineStatus;
 
 struct Handler;
 
@@ -28,6 +30,7 @@ impl EventHandler for Handler {
                 "flipcoin" => commands::flipcoin::run(&command.data.options, &ctx, &command).await,
                 "copypasta" => commands::copypasta::run(&command.data.options, &ctx, &command).await,
                 "rolldice" => commands::roledice::run(&command.data.options, &ctx, &command).await,
+                "gamestatus" => commands::gamestatus::run(&command.data.options, &ctx, &command).await,
                 _ => (),
             };
         }
@@ -42,6 +45,8 @@ impl EventHandler for Handler {
                 .parse()
                 .expect("GUILD_ID must be an integer"),
         );
+
+        ctx.set_presence(Some(Activity::playing("Taking Over The World")), OnlineStatus::Online).await;
 
         let _commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
             commands
@@ -59,7 +64,6 @@ impl EventHandler for Handler {
         let _guild_command = Command::create_global_application_command(&ctx.http, |command| {
             commands::wonderful_command::register(command)
         }).await;
-
     }
 }
 
@@ -68,8 +72,9 @@ async fn main() {
     // Configure the client with your Discord bot token in the environment.
     let token = env::var("DISCORD").expect("Expected a token in the environment");
 
+    let intents = GatewayIntents::MESSAGE_CONTENT | GatewayIntents::non_privileged();
     // Build our client.
-    let mut client = serenity::Client::builder(token, GatewayIntents::empty())
+    let mut client = serenity::Client::builder(token, intents)
         .event_handler(Handler)
         .await
         .expect("Error creating client");
