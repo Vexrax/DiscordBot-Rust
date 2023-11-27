@@ -1,14 +1,16 @@
-use serenity::builder::CreateApplicationCommand;
-use serenity::model::prelude::interaction::application_command::CommandDataOption;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
-use serenity::prelude::*;
+use serenity::builder::{CreateInteractionResponse, CreateInteractionResponseMessage};
+use serenity::all::{CommandInteraction, CommandDataOptionValue, ResolvedValue, CommandOptionType};
+use serenity::builder::{CreateCommand, CreateCommandOption, CreateMessage};
+use serenity::client::Context;
+use serenity::model::application::ResolvedOption;
+use rand::Rng;
 
-use crate::utils::discord_message::respond_to_interaction;
+use crate::utils::discord_message::respond_to_interaction; 
 
-pub async fn run(_options: &[CommandDataOption], ctx: &Context, command: &ApplicationCommandInteraction) {
-    respond_to_interaction(&ctx, &command, &"Skynet V3 (Rust Version)".to_string()).await;
+pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
+    respond_to_interaction(ctx, command, &format!("Skynet V3 (Rust Version)").to_string()).await;
 }
 
-pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    command.name("ping").description("A ping command")
+pub fn register() -> CreateCommand {
+    CreateCommand::new("ping").description("A ping command")
 }

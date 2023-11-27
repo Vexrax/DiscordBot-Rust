@@ -1,12 +1,15 @@
 use std::error::Error;
 
-use serenity::builder::CreateApplicationCommand;
-use serenity::model::prelude::interaction::application_command::CommandDataOption;
 use futures::stream::TryStreamExt;
 use serde::{Deserialize, Serialize};
 use mongodb::{bson::doc};
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::prelude::*;
+
+use serenity::all::{CommandInteraction, CommandDataOptionValue, ResolvedValue, CommandOptionType, Embed};
+use serenity::builder::{CreateCommand, CreateCommandOption, CreateEmbed, CreateMessage};
+use serenity::client::Context;
+use serenity::model::application::ResolvedOption;
+use serenity::utils::EmbedMessageBuilding;
 
 use crate::utils::discord_message::respond_to_interaction;
 use crate::utils::mongo::get_mongo_client;
@@ -17,7 +20,7 @@ struct CopyPasta {
     description: String,  
 }
 
-pub async fn run(_options: &[CommandDataOption], ctx: &Context, command: &ApplicationCommandInteraction) {
+pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     respond_to_interaction(&ctx, &command, &"Sending Pastas".to_string()).await;
 
     let all_copy_pastas: Vec<CopyPasta>;
@@ -28,16 +31,13 @@ pub async fn run(_options: &[CommandDataOption], ctx: &Context, command: &Applic
     }
 
     for copypasta in all_copy_pastas {
-        let _ = command.channel_id.send_message(&ctx.http, |m| {
-            m.embed(|e| e.title(copypasta.title)
-                                            .description(copypasta.description)                                    
-                                        )
-        }).await;
+        let embed = CreateEmbed::new().title(copypasta.title).description(copypasta.description);
+        let _msg = command.channel_id.send_message(&ctx.http,CreateMessage::new().content("FIX LATER").tts(false).embed(embed)).await;
     };
 }
 
-pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    command.name("copypasta").description("Prints out the current pastas")
+pub fn register() -> CreateCommand {
+    return CreateCommand::new("copypasta").description("Prints out the current pastas");
 }
 
 async fn get_copy_pastas() -> mongodb::error::Result<Vec<CopyPasta>> {

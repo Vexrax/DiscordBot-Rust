@@ -1,12 +1,12 @@
-use serenity::builder::CreateApplicationCommand;
-use serenity::model::prelude::interaction::application_command::CommandDataOption;
-use rand::Rng; 
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
-use serenity::prelude::*;
+use serenity::all::CommandInteraction;
+use serenity::builder::CreateCommand;
+use serenity::client::Context;
+use serenity::model::application::ResolvedOption;
+use rand::Rng;
 
-use crate::utils::discord_message::respond_to_interaction;
+use crate::utils::discord_message::respond_to_interaction; 
 
-pub async fn run(_options: &[CommandDataOption], ctx: &Context, command: &ApplicationCommandInteraction) {
+pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     let num: i32 = rand::thread_rng().gen_range(0..2);
     
     let result;
@@ -16,9 +16,9 @@ pub async fn run(_options: &[CommandDataOption], ctx: &Context, command: &Applic
         result = "tails"
     }
 
-    respond_to_interaction(&ctx, &command, &format!("The coin landed on {}", result)).await;
+    respond_to_interaction(ctx, command, &format!("The coin landed on {}", result).to_string()).await;
 }
 
-pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    command.name("flipcoin").description("Flip A coin")
+pub fn register() -> CreateCommand {
+    CreateCommand::new("flipcoin").description("Flip A coin")
 }

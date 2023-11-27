@@ -4,35 +4,68 @@ mod utils;
 use std::env;
 
 use serenity::async_trait;
-use serenity::model::application::command::Command;
-use serenity::model::application::interaction::{Interaction};
 use serenity::model::gateway::Ready;
 use serenity::model::id::GuildId;
 use serenity::prelude::*;
 use serenity::model::gateway::Activity;
 use serenity::model::user::OnlineStatus;
 
+use serenity::builder::{CreateInteractionResponse, CreateInteractionResponseMessage};
+use serenity::model::application::{Command, Interaction};
+
 struct Handler;
 
 #[async_trait]
 impl EventHandler for Handler {
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
-        if let Interaction::ApplicationCommand(command) = &interaction {
-            //println!("Received command interaction: {:#?}", command);
+        if let Interaction::Command(command) = interaction {
 
-            match command.data.name.as_str() {
-                "eightball" => commands::eightball::run(&command.data.options, &ctx, &command).await,
-                "quote" => commands::quote::run(&command.data.options, &ctx, &interaction, &command).await,
-                "quoteadd" => commands::quoteadd::run(&command.data.options, &ctx, &interaction, &command).await,
-                "ping" => commands::ping::run(&command.data.options, &ctx, &command).await,
-                "id" => commands::id::run(&command.data.options, &ctx, &command).await,
-                "mentalhelp" => commands::mentalhelp::run(&command.data.options, &ctx, &command).await,
-                "flipcoin" => commands::flipcoin::run(&command.data.options, &ctx, &command).await,
-                "copypasta" => commands::copypasta::run(&command.data.options, &ctx, &command).await,
-                "rolldice" => commands::roledice::run(&command.data.options, &ctx, &command).await,
-                "gamestatus" => commands::gamestatus::run(&command.data.options, &ctx, &command).await,
-                "remindme" => commands::reminders::run(&command.data.options, &ctx, &command).await,
-                _ => (),
+            let content = match command.data.name.as_str() {
+                "rolldice" => {
+                    commands::roledice::run(&command.data.options(), &ctx, &command).await;
+                    None
+                },
+                "reminders" => {
+                    commands::reminders::run(&command.data.options(), &ctx, &command).await;
+                    None
+                },
+                "quoteadd" => {
+                    commands::quoteadd::run(&command.data.options(), &ctx, &command).await;
+                    None
+                },
+                "quote" => {
+                    commands::quote::run(&command.data.options(), &ctx, &command).await;
+                    None
+                },
+                "ping" => {
+                    commands::ping::run(&command.data.options(), &ctx, &command).await;
+                    None
+                },
+                "mentalhelp" => {
+                    commands::mentalhelp::run(&command.data.options(), &ctx, &command).await;
+                    None
+                },
+                "id" => {
+                    commands::id::run(&command.data.options(), &ctx, &command).await;
+                    None
+                },
+                "gamestatus" => {
+                    commands::gamestatus::run(&command.data.options(), &ctx, &command).await;
+                    None
+                },
+                "flipcoin" => {
+                    commands::flipcoin::run(&command.data.options(), &ctx, &command).await;
+                    None
+                },
+                "eightball" => {
+                    commands::eightball::run(&command.data.options(), &ctx, &command).await;
+                    None
+                },
+                "copypasta" => {
+                    commands::copypasta::run(&command.data.options(), &ctx, &command).await;
+                    None
+                },
+                _ => Some("not implemented :(".to_string()),
             };
         }
     }
@@ -40,33 +73,34 @@ impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
 
-        let guild_id = GuildId(
+        let guild_id = GuildId::new(
             env::var("GUILD_ID")
                 .expect("Expected GUILD_ID in environment")
                 .parse()
                 .expect("GUILD_ID must be an integer"),
         );
 
-        ctx.set_presence(Some(Activity::playing("Taking Over The World")), OnlineStatus::Online).await;
+        // ctx.set_presence(Some(Activity::playing("Taking Over The World")), OnlineStatus::Online).await;
 
-        let _commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
-            commands
-                .create_application_command(|command| commands::ping::register(command))
-                .create_application_command(|command| commands::id::register(command))
-                .create_application_command(|command| commands::roledice::register(command))
-                .create_application_command(|command| commands::copypasta::register(command))
-                .create_application_command(|command| commands::eightball::register(command))
-                .create_application_command(|command| commands::quote::register(command))
-                .create_application_command(|command| commands::quoteadd::register(command))
-                .create_application_command(|command| commands::flipcoin::register(command))
-                .create_application_command(|command| commands::mentalhelp::register(command))
-                .create_application_command(|command| commands::gamestatus::register(command)) // TODO Figure out why this isnt registering
-                .create_application_command(|command| commands::reminders::register(command)) // TODO Figure out why this isnt registering
-        }).await;
+        let commands = guild_id
+        .set_commands(&ctx.http, vec![
+            commands::roledice::register(),
+            commands::reminders::register(),
+            commands::quoteadd::register(),
+            commands::quote::register(),
+            commands::ping::register(),
+            commands::mentalhelp::register(),
+            commands::id::register(),
+            commands::gamestatus::register(),
+            commands::flipcoin::register(),
+            commands::eightball::register(),
+            commands::copypasta::register(),
 
-        let _guild_command = Command::create_global_application_command(&ctx.http, |command| {
-            commands::wonderful_command::register(command)
-        }).await;
+        ])
+        .await;
+
+        // Keep this for debugging when adding new commands
+        // println!("I now have the following guild slash commands: {commands:#?}");
     }
 }
 

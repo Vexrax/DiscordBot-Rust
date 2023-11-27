@@ -1,6 +1,5 @@
 pub mod ping;
 pub mod id;
-pub mod wonderful_command;
 pub mod mentalhelp;
 pub mod flipcoin;
 pub mod eightball;

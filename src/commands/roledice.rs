@@ -1,16 +1,19 @@
-use serenity::builder::CreateApplicationCommand;
-use serenity::model::prelude::interaction::application_command::CommandDataOption;
+use serenity::all::{CommandInteraction, CommandDataOptionValue, ResolvedValue, CommandOptionType};
+use serenity::builder::{CreateCommand, CreateCommandOption, CreateInteractionResponseMessage, CreateInteractionResponse};
+use serenity::client::Context;
+use serenity::model::application::ResolvedOption;
 use rand::Rng; 
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
-use serenity::prelude::*;
 
-use crate::utils::discord_message::respond_to_interaction;
-
-pub async fn run(_options: &[CommandDataOption], ctx: &Context, command: &ApplicationCommandInteraction) {
+pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     let num: i32 = rand::thread_rng().gen_range(0..6);
-    respond_to_interaction(&ctx, &command, &format!("You rolled a {}", num)).await;
+
+    let data = CreateInteractionResponseMessage::new().content(format!("You rolled a {}", num));
+    let builder = CreateInteractionResponse::Message(data);
+    if let Err(why) = command.create_response(&ctx.http, builder).await {
+        println!("Cannot respond to slash command: {why}");
+    }
 }
 
-pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    command.name("rolldice").description("Rolls a six sides dice")
+pub fn register() -> CreateCommand {
+    CreateCommand::new("rolldice").description("Rolls a six sides dice")
 }

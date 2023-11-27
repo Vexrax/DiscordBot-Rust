@@ -1,29 +1,22 @@
-use serenity::builder::CreateApplicationCommand;
-use serenity::model::prelude::interaction::application_command::CommandDataOption;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
-use serenity::prelude::*;
-use serenity::model::prelude::command::CommandOptionType;
+use serenity::all::{CommandInteraction, CommandDataOptionValue, ResolvedValue, CommandOptionType};
+use serenity::builder::{CreateCommand, CreateCommandOption};
+use serenity::client::Context;
+use serenity::model::application::ResolvedOption;
+use rand::Rng; 
 
-use crate::utils::discord_message::respond_to_interaction;
+pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
 
-pub async fn run(_options: &[CommandDataOption], ctx: &Context, command: &ApplicationCommandInteraction) {
-    respond_to_interaction(&ctx, &command, &"Reminders (TODO)".to_string()).await;
 }
 
-pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    command.name("remindme").description("remind yourself about something")
-    .create_option(|option| {
-        option
-            .name("amount")
-            .description("amount of time")
-            .kind(CommandOptionType::Number)
-            .required(true)
-    })
-    .create_option(|option| {
-        option
-            .name("unit")
-            .description("unit of measurement")
-            .kind(CommandOptionType::String)
-            .required(true)
-    })
+pub fn register() -> CreateCommand {
+    CreateCommand::new("reminder")
+    .description("Sets a reminder")
+    .add_option(
+        CreateCommandOption::new(CommandOptionType::String, "amount", "Amount")
+            .required(true),
+    )
+    .add_option(
+        CreateCommandOption::new(CommandOptionType::String, "unit", "Unit Of Measurement")
+            .required(true),
+    )
 }

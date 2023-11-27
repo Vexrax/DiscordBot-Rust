@@ -1,17 +1,13 @@
-use serenity::builder::CreateApplicationCommand;
-use serenity::model::prelude::interaction::application_command::{
-    CommandDataOption
-};
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
-use serenity::prelude::*;
+use serenity::all::{CommandInteraction, CommandDataOptionValue, ResolvedValue, CommandOptionType};
+use serenity::builder::{CreateCommand, CreateCommandOption};
+use serenity::client::Context;
+use serenity::model::application::ResolvedOption;
+use rand::Rng; 
 
-pub async fn run(_options: &[CommandDataOption], _ctx: &Context, _command: &ApplicationCommandInteraction) {
-    unimplemented!()
-    // Loop over all the players in the server 
-    // generate a card to show their current status of their game
-    // Print those to console
+pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
+    // return "TODO (GAMESTATUS)".to_string()
 }
 
-pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    command.name("game status").description("Gets the status of the registered players in the server")
+pub fn register() -> CreateCommand {
+    CreateCommand::new("gamestatus").description("Gets the status of the registered players in the server")
 }

@@ -1,15 +1,10 @@
-use serenity::builder::CreateApplicationCommand;
-use serenity::model::prelude::command::CommandOptionType;
-use serenity::model::prelude::interaction::application_command::{
-    CommandDataOption,
-    CommandDataOptionValue,
-};
-use rand::Rng; 
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
-use serenity::prelude::*;
+use serenity::all::{CommandInteraction, CommandDataOptionValue, ResolvedValue, CommandOptionType};
+use serenity::builder::{CreateCommand, CreateCommandOption};
+use serenity::client::Context;
+use serenity::model::application::ResolvedOption;
+use rand::Rng;
 
-use crate::utils::discord_message::respond_to_interaction;
-
+use crate::utils::discord_message::respond_to_interaction; 
 
 const RESPONSE_OPTIONS: &[&str] = &[
     "As I see it, yes.",
@@ -26,29 +21,19 @@ const RESPONSE_OPTIONS: &[&str] = &[
     "Outlook not so good."
 ];
 
-pub async fn run(options: &[CommandDataOption], ctx: &Context, command: &ApplicationCommandInteraction) {
-    let option = options
-        .get(0)
-        .expect("Expected user option")
-        .resolved
-        .as_ref()
-        .expect("Expected user object");
-
-    if let CommandDataOptionValue::String(_question) = option {
+pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
+    if let Some(ResolvedOption {value: ResolvedValue::String(options), ..}) = options.first() {
         let response = RESPONSE_OPTIONS[rand::thread_rng().gen_range(0..RESPONSE_OPTIONS.len())].to_string();
         // TODO add the question in here 
-        respond_to_interaction(&ctx, &command, &response).await;  
+        respond_to_interaction(ctx, command, &format!("{response}").to_string()).await;
     } else {
-        respond_to_interaction(&ctx, &command, &"Please ask a question".to_string()).await;  
+        respond_to_interaction(ctx, command, &format!("Please ask a question").to_string()).await;
     }    
 }
 
-pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    command.name("eightball").description("Ask the eightball a question").create_option(|option| {
-        option
-            .name("question")
-            .description("the question to ask")
-            .kind(CommandOptionType::String)
-            .required(true)
-    })
+pub fn register() -> CreateCommand {
+    CreateCommand::new("eightball").description("Ask the eightball a question").add_option(
+        CreateCommandOption::new(CommandOptionType::String, "question", "the question to ask")
+            .required(true),
+    )
 }
