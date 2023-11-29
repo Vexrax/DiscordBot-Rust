@@ -3,15 +3,17 @@ use serenity::builder::{CreateCommand, CreateCommandOption};
 use serenity::model::application::{CommandOptionType, ResolvedOption, ResolvedValue};
 use serenity::client::Context;
 
+use crate::utils::discord_message::respond_to_interaction;
+
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
-    // if let Some(ResolvedOption {
-    //     value: ResolvedValue::User(user, _), ..
-    // }) = options.first()
-    // {
-    //     format!("{}'s id is {}", user.tag(), user.id)
-    // } else {
-    //     "Please provide a valid user".to_string()
-    // }
+    if let Some(ResolvedOption {
+        value: ResolvedValue::User(user, _), ..
+    }) = options.first()
+    {
+        respond_to_interaction(ctx, command, &format!("{}'s id is {}", user.tag(), user.id)).await;
+    } else {
+        respond_to_interaction(ctx, command, &"Please provide a valid user".to_string()).await;       
+    }
 }
 
 pub fn register() -> CreateCommand {

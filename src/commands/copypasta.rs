@@ -32,7 +32,7 @@ pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &Comma
 
     for copypasta in all_copy_pastas {
         let embed = CreateEmbed::new().title(copypasta.title).description(copypasta.description);
-        let _msg = command.channel_id.send_message(&ctx.http,CreateMessage::new().content("FIX LATER").tts(false).embed(embed)).await;
+        let _msg = command.channel_id.send_message(&ctx.http,CreateMessage::new().tts(false).embed(embed)).await;
     };
 }
 
