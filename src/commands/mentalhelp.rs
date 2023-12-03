@@ -3,8 +3,6 @@ use serenity::builder::{CreateCommand, CreateInteractionResponseMessage, CreateI
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
 
-use crate::utils::discord_message::respond_to_interaction;
-
 pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     let data = CreateInteractionResponseMessage::new().content( "https://www.google.com/search?client=firefox-b-1-d&q=mental+hospitals+near+me+".to_string());
     let builder = CreateInteractionResponse::Message(data);

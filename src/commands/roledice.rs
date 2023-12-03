@@ -1,8 +1,8 @@
-use serenity::all::{CommandInteraction, CommandDataOptionValue, ResolvedValue, CommandOptionType};
-use serenity::builder::{CreateCommand, CreateCommandOption, CreateInteractionResponseMessage, CreateInteractionResponse};
+use serenity::all::{CommandInteraction};
+use serenity::builder::{CreateCommand, CreateInteractionResponseMessage, CreateInteractionResponse};
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
-use rand::Rng; 
+use rand::Rng;
 
 pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     let num: i32 = rand::thread_rng().gen_range(0..6);

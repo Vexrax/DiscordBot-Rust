@@ -7,69 +7,14 @@ use serenity::async_trait;
 use serenity::model::gateway::Ready;
 use serenity::model::id::GuildId;
 use serenity::prelude::*;
-use serenity::model::gateway::Activity;
-use serenity::model::user::OnlineStatus;
 
-use serenity::builder::{CreateInteractionResponse, CreateInteractionResponseMessage};
-use serenity::model::application::{Command, Interaction};
+
+use serenity::model::application::{Interaction};
 
 struct Handler;
 
 #[async_trait]
 impl EventHandler for Handler {
-    async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
-        if let Interaction::Command(command) = interaction {
-
-            let content = match command.data.name.as_str() {
-                "rolldice" => {
-                    commands::roledice::run(&command.data.options(), &ctx, &command).await;
-                    None
-                },
-                "reminders" => {
-                    commands::reminders::run(&command.data.options(), &ctx, &command).await;
-                    None
-                },
-                "quoteadd" => {
-                    commands::quoteadd::run(&command.data.options(), &ctx, &command).await;
-                    None
-                },
-                "quote" => {
-                    commands::quote::run(&command.data.options(), &ctx, &command).await;
-                    None
-                },
-                "ping" => {
-                    commands::ping::run(&command.data.options(), &ctx, &command).await;
-                    None
-                },
-                "mentalhelp" => {
-                    commands::mentalhelp::run(&command.data.options(), &ctx, &command).await;
-                    None
-                },
-                "id" => {
-                    commands::id::run(&command.data.options(), &ctx, &command).await;
-                    None
-                },
-                "gamestatus" => {
-                    commands::gamestatus::run(&command.data.options(), &ctx, &command).await;
-                    None
-                },
-                "flipcoin" => {
-                    commands::flipcoin::run(&command.data.options(), &ctx, &command).await;
-                    None
-                },
-                "eightball" => {
-                    commands::eightball::run(&command.data.options(), &ctx, &command).await;
-                    None
-                },
-                "copypasta" => {
-                    commands::copypasta::run(&command.data.options(), &ctx, &command).await;
-                    None
-                },
-                _ => Some("not implemented :(".to_string()),
-            };
-        }
-    }
-
     async fn ready(&self, ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
 
@@ -83,24 +28,75 @@ impl EventHandler for Handler {
         // ctx.set_presence(Some(Activity::playing("Taking Over The World")), OnlineStatus::Online).await;
 
         let commands = guild_id
-        .set_commands(&ctx.http, vec![
-            commands::roledice::register(),
-            commands::reminders::register(),
-            commands::quoteadd::register(),
-            commands::quote::register(),
-            commands::ping::register(),
-            commands::mentalhelp::register(),
-            commands::id::register(),
-            commands::gamestatus::register(),
-            commands::flipcoin::register(),
-            commands::eightball::register(),
-            commands::copypasta::register(),
-
-        ])
-        .await;
+            .set_commands(&ctx.http, vec![
+                commands::roledice::register(),
+                commands::reminders::register(),
+                commands::quoteadd::register(),
+                commands::quote::register(),
+                commands::ping::register(),
+                commands::mentalhelp::register(),
+                commands::id::register(),
+                commands::gamestatus::register(),
+                commands::flipcoin::register(),
+                commands::eightball::register(),
+                commands::copypasta::register(),
+            ])
+            .await;
 
         // Keep this for debugging when adding new commands
         // println!("I now have the following guild slash commands: {commands:#?}");
+    }
+
+    async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
+        if let Interaction::Command(command) = interaction {
+            let content = match command.data.name.as_str() {
+                "rolldice" => {
+                    commands::roledice::run(&command.data.options(), &ctx, &command).await;
+                    None
+                }
+                "reminders" => {
+                    commands::reminders::run(&command.data.options(), &ctx, &command).await;
+                    None
+                }
+                "quoteadd" => {
+                    commands::quoteadd::run(&command.data.options(), &ctx, &command).await;
+                    None
+                }
+                "quote" => {
+                    commands::quote::run(&command.data.options(), &ctx, &command).await;
+                    None
+                }
+                "ping" => {
+                    commands::ping::run(&command.data.options(), &ctx, &command).await;
+                    None
+                }
+                "mentalhelp" => {
+                    commands::mentalhelp::run(&command.data.options(), &ctx, &command).await;
+                    None
+                }
+                "id" => {
+                    commands::id::run(&command.data.options(), &ctx, &command).await;
+                    None
+                }
+                "gamestatus" => {
+                    commands::gamestatus::run(&command.data.options(), &ctx, &command).await;
+                    None
+                }
+                "flipcoin" => {
+                    commands::flipcoin::run(&command.data.options(), &ctx, &command).await;
+                    None
+                }
+                "eightball" => {
+                    commands::eightball::run(&command.data.options(), &ctx, &command).await;
+                    None
+                }
+                "copypasta" => {
+                    commands::copypasta::run(&command.data.options(), &ctx, &command).await;
+                    None
+                }
+                _ => Some("not implemented :(".to_string()),
+            };
+        }
     }
 }
 

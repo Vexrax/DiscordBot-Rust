@@ -6,7 +6,7 @@ use mongodb::bson::doc;
 use serenity::model::prelude::ChannelId;
 use serenity::prelude::*;
 
-use serenity::all::{CommandInteraction, CommandDataOptionValue, ResolvedValue, CommandOptionType};
+use serenity::all::{CommandInteraction, ResolvedValue, CommandOptionType};
 use serenity::builder::{CreateCommand, CreateCommandOption, CreateMessage, CreateEmbed};
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
@@ -21,7 +21,7 @@ struct Quote {
     quote: String,
     year: String,
     author: String,
-    context: String,  
+    context: String,
 }
 
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
@@ -40,7 +40,7 @@ async fn get_quote_from(name: &String, ctx: &Context, command: &CommandInteracti
     match get_quotes(doc! { "author": capitalize(name) }).await {
         Ok(quote) => all_quotes = quote,
         Err(err) => {
-            all_quotes = vec! [];
+            all_quotes = vec![];
             eprintln!("Error occured while getting quote from, error: {}", err)
         }
     }
@@ -49,7 +49,6 @@ async fn get_quote_from(name: &String, ctx: &Context, command: &CommandInteracti
 }
 
 async fn get_random_quote(ctx: &Context, command: &CommandInteraction) {
-
     respond_to_interaction(&ctx, &command, &"Getting a random quote. . .".to_string()).await;
 
     let all_quotes: Vec<Quote>;
@@ -57,9 +56,9 @@ async fn get_random_quote(ctx: &Context, command: &CommandInteraction) {
     match get_quotes(doc! {  }).await {
         Ok(quote) => all_quotes = quote,
         Err(err) => {
-            all_quotes = vec! [];
+            all_quotes = vec![];
             eprintln!("Error occured while getting qute {}", err)
-        } 
+        }
     }
 
     send_quote_in_channel(ctx, &command.channel_id, all_quotes).await
@@ -72,14 +71,14 @@ async fn send_quote_in_channel(ctx: &Context, channel_id: &ChannelId, quotes: Ve
     // TODO clean this up so we dont have dupe code for sending the embed
     if optional_quote.is_none() {
         let embed = CreateEmbed::new().title("ERROR").description(&format!("Couldnt find a quote!"));
-        let _msg = channel_id.send_message(&ctx.http,CreateMessage::new().tts(false).embed(embed)).await;
+        let _msg = channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
         return;
     }
 
     let chosen_quote = optional_quote.unwrap();
 
     let embed = CreateEmbed::new().title("").description(&format!("{} -{} {} {}", chosen_quote.quote, chosen_quote.author, chosen_quote.context, chosen_quote.year));
-    let _msg = channel_id.send_message(&ctx.http,CreateMessage::new().tts(false).embed(embed)).await;
+    let _msg = channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
 }
 
 async fn get_quotes(filter: Document) -> mongodb::error::Result<Vec<Quote>> {
