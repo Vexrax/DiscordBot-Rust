@@ -40,6 +40,7 @@ impl EventHandler for Handler {
                 commands::flipcoin::register(),
                 commands::eightball::register(),
                 commands::copypasta::register(),
+                commands::messageleaderboard::register(),
             ])
             .await;
 
@@ -92,6 +93,10 @@ impl EventHandler for Handler {
                 }
                 "copypasta" => {
                     commands::copypasta::run(&command.data.options(), &ctx, &command).await;
+                    None
+                }
+                "messageleaderboard" => {
+                    commands::messageleaderboard::run(&command.data.options(), &ctx, &command).await;
                     None
                 }
                 _ => Some("not implemented :(".to_string()),
