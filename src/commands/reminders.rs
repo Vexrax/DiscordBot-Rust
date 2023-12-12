@@ -5,6 +5,12 @@ use serenity::model::application::ResolvedOption;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use std::str::FromStr;
 use crate::utils::discord_message::respond_to_interaction;
+
+struct Reminder {
+    reminder: String,
+    time: u128
+}
+
 #[derive(Clone)]
 enum TimeUnit {
     Minutes,
@@ -53,9 +59,19 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
         return;
     }
 
-    let current_time = SystemTime::now()
+    let current_time_millia = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards");
+
+    let time_in_future_millis = amount * get_millisecond_conversion_factor(unit);
+    let timestamp_to_remind_at = current_time_millia.as_millis() + time_in_future_millis;
+
+    let reminder = Reminder {
+        reminder,
+        time: timestamp_to_remind_at,
+    };
+
+    // TODO add to DB
 }
 
 pub fn register() -> CreateCommand {
