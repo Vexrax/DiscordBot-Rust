@@ -59,12 +59,13 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
         return;
     }
 
+
     let current_time_millia = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards");
 
-    let time_in_future_millis = amount * get_millisecond_conversion_factor(unit);
-    let timestamp_to_remind_at = current_time_millia.as_millis() + time_in_future_millis;
+    let time_in_future_millis = i128::from(amount) * get_millisecond_conversion_factor(unit);
+    let timestamp_to_remind_at = current_time_millia.as_millis().wrapping_add_signed(time_in_future_millis);
 
     let reminder = Reminder {
         reminder,
@@ -78,12 +79,11 @@ pub fn register() -> CreateCommand {
     CreateCommand::new("reminder")
         .description("Sets a reminder")
         .add_option(
-            CreateCommandOption::new(CommandOptionType::String, "Reminder", "What")
+            CreateCommandOption::new(CommandOptionType::String, "reminder", "What")
                 .required(true),
         )
         .add_option(
             CreateCommandOption::new(CommandOptionType::Integer, "amount", "Amount")
-                .add_string_choice([TimeUnit::Minutes].to_vec().iter(), [TimeUnit::Minutes].to_vec().iter())// TODO need to fix this
                 .required(true),
         )
         .add_option(
@@ -92,7 +92,7 @@ pub fn register() -> CreateCommand {
         )
 }
 
-fn get_millisecond_conversion_factor(unit_from_user: TimeUnit) -> i32 {
+fn get_millisecond_conversion_factor(unit_from_user: TimeUnit) -> i128 {
     return match unit_from_user {
         TimeUnit::Minutes => 60000,
         TimeUnit::Hours => 60000 * 60,

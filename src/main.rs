@@ -55,7 +55,7 @@ impl EventHandler for Handler {
                     commands::roledice::run(&command.data.options(), &ctx, &command).await;
                     None
                 }
-                "reminders" => {
+                "reminder" => {
                     commands::reminders::run(&command.data.options(), &ctx, &command).await;
                     None
                 }
