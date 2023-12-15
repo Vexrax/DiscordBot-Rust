@@ -2,7 +2,7 @@ use serenity::all::{CommandInteraction, CommandOptionType, ResolvedValue};
 use serenity::builder::{CreateCommand, CreateCommandOption};
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::str::FromStr;
 use crate::utils::discord_message::respond_to_interaction;
 

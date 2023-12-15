@@ -63,9 +63,9 @@ fn build_embed(main_player_game_name: String, main_player_tagline: String, main_
             .unwrap_or_else(|| "UNRANKED".to_string());
         let title = format!("{} ({})", match_player.summoner_name, match_player.champion_id.identifier().unwrap_or_else(|| "Unknown Champ?"));
 
-        if (match_player.team_id == Team::BLUE) {
+        if match_player.team_id == Team::BLUE {
             blue_fields.push((title, display_rank, true));
-        } else if (match_player.team_id == Team::RED) {
+        } else if match_player.team_id == Team::RED {
             red_fields.push((title, display_rank, true));
         }
     }
