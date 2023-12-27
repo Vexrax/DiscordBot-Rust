@@ -359,6 +359,7 @@ dependencies = [
  "riven",
  "serde",
  "serenity",
+ "time",
  "tokio",
 ]
 

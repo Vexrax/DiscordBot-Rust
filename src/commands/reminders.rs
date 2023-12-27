@@ -1,4 +1,3 @@
-use std::ops::Add;
 use serenity::all::{ChannelId, CommandInteraction, CommandOptionType, GuildId, ResolvedValue};
 use serenity::builder::{CreateCommand, CreateCommandOption};
 use serenity::client::Context;
@@ -8,7 +7,9 @@ use std::str::FromStr;
 use mongodb::Collection;
 use serde::{Deserialize, Serialize};
 use chrono::prelude::DateTime;
-use chrono::{Local, Utc};
+use chrono::{Local};
+use futures::TryStreamExt;
+use mongodb::bson::{doc, Document};
 use crate::utils::discord_message::respond_to_interaction;
 use crate::utils::mongo::get_mongo_client;
 
@@ -43,6 +44,8 @@ impl FromStr for TimeUnit {
         }
     }
 }
+
+const REMINDER_DB_NAME: &str = "Reminders";
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     let reminder: String;
     let amount: i64;
@@ -97,7 +100,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     let database_result = get_mongo_client().await;
 
     match database_result {
-        Ok(db) => add_reminder_to_collection(db.collection::<Reminder>("Reminders"), reminder).await,
+        Ok(db) => add_reminder_to_collection(db.collection::<Reminder>(REMINDER_DB_NAME), reminder).await,
         Err(err) => {
             eprintln!("Error: something went wrong when trying to add a reminder to the DB: {}", err);
         }
@@ -122,16 +125,56 @@ pub fn register() -> CreateCommand {
         )
 }
 
-pub fn check_for_reminders() {
-    // Pull the active reminders
-    // Check if any are due
-    // Make the call to the channel
-    // Delete reminder from DB
-    todo!()
+pub async fn check_for_reminders(ctx: &Context) {
+
+    let all_reminders: Vec<Reminder>;
+
+    match get_reminders(doc! {  }).await {
+        Ok(quote) => all_reminders = quote,
+        Err(err) => {
+            all_reminders = vec![];
+            eprintln!("Error occurred while getting reminders {}", err)
+        }
+    }
+
+    for reminder in all_reminders {
+        if!(SystemTime::now() > SystemTime::UNIX_EPOCH + Duration::from_secs(reminder.time)) {
+            continue;
+        }
+        let channel_id = ctx.http.get_channel(ChannelId::from(reminder.channel_id))
+            .await
+            .expect("Expected to be able to get a channel");
+        channel_id.id().say(&ctx.http, format!("You asked me to remind you about: {}", reminder.reminder))
+            .await
+            .expect("Expected the message to be able to send");
+        delete_reminder_from_collection(reminder).await;
+    }
 }
 
 async fn add_reminder_to_collection(collection: Collection<Reminder>, reminder:  Reminder) {
    collection.insert_one(reminder, None).await.ok();
+}
+
+async fn get_reminders(filter: Document) -> mongodb::error::Result<Vec<Reminder>> {
+    let database = get_mongo_client().await?;
+    let typed_collection = database.collection::<Reminder>(REMINDER_DB_NAME);
+    let cursor = typed_collection.find(filter, None).await?;
+    Ok(cursor.try_collect().await.unwrap_or_else(|_| vec![]))
+}
+
+async fn delete_reminder_from_collection(reminder: Reminder) {
+    let database = get_mongo_client().await.expect("Expected to be able to find DB");
+    let typed_collection = database.collection::<Reminder>(REMINDER_DB_NAME);
+
+    // TODO maybe this needs to be more strict on which reminders to delete?
+    match typed_collection.delete_one(doc! { "reminder" : reminder.reminder }, None).await {
+        Ok(delete_result) => {
+            println!("Deleted {} from the {} db", delete_result.deleted_count, REMINDER_DB_NAME);
+        },
+        Err(err) => {
+            eprintln!("Error occurred when deleting reminder: {}", err)
+        }
+    }
 }
 
 fn get_second_conversion_factor(unit_from_user: TimeUnit) -> i64 {

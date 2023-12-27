@@ -2,6 +2,7 @@ mod commands;
 mod utils;
 
 use std::env;
+use std::time::Duration;
 
 use serenity::async_trait;
 use serenity::model::gateway::Ready;
@@ -10,7 +11,7 @@ use serenity::prelude::*;
 
 
 use serenity::model::application::{Interaction};
-
+use tokio::{task, time}; // 1.3.0
 struct Handler;
 
 #[async_trait]
@@ -46,6 +47,16 @@ impl EventHandler for Handler {
 
         // Keep this for debugging when adding new commands
         // println!("I now have the following guild slash commands: {commands:#?}");
+
+        // Do a check every 5 mins to async tasks. This is nonblocking
+        task::spawn(async move{
+            let mut interval = time::interval(Duration::from_secs(300));
+
+            loop {
+                interval.tick().await;
+                commands::reminders::check_for_reminders(&ctx).await;
+            }
+        });
     }
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
