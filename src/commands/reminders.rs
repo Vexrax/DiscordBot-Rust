@@ -1,4 +1,4 @@
-use serenity::all::{ChannelId, CommandInteraction, CommandOptionType, GuildId, ResolvedValue};
+use serenity::all::{Channel, ChannelId, CommandInteraction, CommandOptionType, CreateEmbed, CreateMessage, GuildId, ResolvedValue, User, UserId};
 use serenity::builder::{CreateCommand, CreateCommandOption};
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
@@ -9,7 +9,8 @@ use serde::{Deserialize, Serialize};
 use chrono::prelude::DateTime;
 use chrono::{Local};
 use futures::TryStreamExt;
-use mongodb::bson::{doc, Document};
+use mongodb::bson::{Bson, doc, Document};
+use serenity::model::Color;
 use crate::utils::discord_message::respond_to_interaction;
 use crate::utils::mongo::get_mongo_client;
 
@@ -18,6 +19,7 @@ struct Reminder {
     reminder: String,
     guild_id: u64,
     channel_id: u64,
+    user_id: u64,
     time: u64
 }
 
@@ -46,12 +48,14 @@ impl FromStr for TimeUnit {
 }
 
 const REMINDER_DB_NAME: &str = "Reminders";
+
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     let reminder: String;
     let amount: i64;
     let unit: TimeUnit;
     let guild_id: GuildId = command.guild_id.expect("Expected this message to be in a guild");
     let channel_id: ChannelId = command.channel_id;
+    let user_id: UserId = command.user.id;
 
     if let Some(ResolvedOption { value: ResolvedValue::String(reminder_option), .. }) = options.get(0) {
         reminder = reminder_option.to_string();
@@ -85,6 +89,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
         reminder,
         guild_id: guild_id.get(),
         channel_id: channel_id.get(),
+        user_id: user_id.get(),
         time: timestamp_to_remind_at_seconds,
     };
 
@@ -95,7 +100,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     let datetime = DateTime::<Local>::from(timestamp_in_future); // using locale for now, should find a way to use EST in the future
 
     // TODO use month names
-    respond_to_interaction(&ctx, &command, &format!("I will remind you about: '{}' on {} EST", &reminder.reminder, datetime.format("%Y-%m-%d %H:%M").to_string())).await;
+    respond_to_interaction(&ctx, &command, &format!("I will remind {} about: '{}' on {} EST", command.user.name, &reminder.reminder, datetime.format("%Y-%m-%d %H:%M").to_string())).await;
 
     let database_result = get_mongo_client().await;
 
@@ -141,12 +146,21 @@ pub async fn check_for_reminders(ctx: &Context) {
         if!(SystemTime::now() > SystemTime::UNIX_EPOCH + Duration::from_secs(reminder.time)) {
             continue;
         }
-        let channel_id = ctx.http.get_channel(ChannelId::from(reminder.channel_id))
+
+        let channel: Channel = ctx.http.get_channel(ChannelId::from(reminder.channel_id))
             .await
             .expect("Expected to be able to get a channel");
-        channel_id.id().say(&ctx.http, format!("You asked me to remind you about: {}", reminder.reminder))
+        let user: User = ctx.http.get_user(UserId::from(reminder.user_id))
             .await
-            .expect("Expected the message to be able to send");
+            .expect("Expected the user to exist");
+        let embed: CreateEmbed = CreateEmbed::new()
+            .title(&format!("Reminder for {}", user.name))
+            .description(&format!("{}", reminder.reminder))
+            .color(Color::DARK_TEAL)
+            .thumbnail(user.avatar_url().expect("Expected URL"));
+
+        let _ = channel.id().send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
+
         delete_reminder_from_collection(reminder).await;
     }
 }
@@ -166,10 +180,9 @@ async fn delete_reminder_from_collection(reminder: Reminder) {
     let database = get_mongo_client().await.expect("Expected to be able to find DB");
     let typed_collection = database.collection::<Reminder>(REMINDER_DB_NAME);
 
-    // TODO maybe this needs to be more strict on which reminders to delete?
-    match typed_collection.delete_one(doc! { "reminder" : reminder.reminder }, None).await {
+    match typed_collection.delete_one(doc! { "reminder" : reminder.reminder, "user_id": Bson::Int64(reminder.user_id as i64)}, None).await {
         Ok(delete_result) => {
-            println!("Deleted {} from the {} db", delete_result.deleted_count, REMINDER_DB_NAME);
+            println!("Deleted {} from the {} db", delete_result.deleted_count, typed_collection.name());
         },
         Err(err) => {
             eprintln!("Error occurred when deleting reminder: {}", err)
