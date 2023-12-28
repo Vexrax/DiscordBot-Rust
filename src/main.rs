@@ -9,7 +9,6 @@ use serenity::model::gateway::Ready;
 use serenity::model::id::GuildId;
 use serenity::prelude::*;
 
-
 use serenity::model::application::{Interaction};
 use tokio::{task, time}; // 1.3.0
 struct Handler;
@@ -42,6 +41,7 @@ impl EventHandler for Handler {
                 commands::eightball::register(),
                 commands::copypasta::register(),
                 commands::messageleaderboard::register(),
+                commands::scouting::register()
             ])
             .await;
 
@@ -108,6 +108,10 @@ impl EventHandler for Handler {
                 }
                 "messageleaderboard" => {
                     commands::messageleaderboard::run(&command.data.options(), &ctx, &command).await;
+                    None
+                }
+                "scouting" => {
+                    commands::scouting::run(&command.data.options(), &ctx, &command).await;
                     None
                 }
                 _ => Some("not implemented :(".to_string()),
