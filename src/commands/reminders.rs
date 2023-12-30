@@ -7,11 +7,11 @@ use std::str::FromStr;
 use mongodb::Collection;
 use serde::{Deserialize, Serialize};
 use chrono::prelude::DateTime;
-use chrono::{Local};
+use chrono::{Datelike, Local, Month};
 use futures::TryStreamExt;
 use mongodb::bson::{Bson, doc, Document};
 use serenity::model::Color;
-use crate::utils::discord_message::respond_to_interaction;
+use crate::utils::discord_message::{respond_to_interaction, respond_to_interaction_with_embed};
 use crate::utils::mongo::get_mongo_client;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -99,8 +99,17 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     let timestamp_in_future = SystemTime::now().checked_add(Duration::from_secs(time_in_future_seconds as u64)).expect("Expected the time to be a u64");
     let datetime = DateTime::<Local>::from(timestamp_in_future); // using locale for now, should find a way to use EST in the future
 
-    // TODO use month names
-    respond_to_interaction(&ctx, &command, &format!("I will remind {} about: '{}' on {} EST", command.user.name, &reminder.reminder, datetime.format("%Y-%m-%d %H:%M").to_string())).await;
+    let month = Month::try_from(u8::try_from(datetime.month()).unwrap()).expect("Expected Month to be formatted correctly");
+    let day = datetime.day();
+    let year = datetime.year();
+
+    let embed: CreateEmbed = CreateEmbed::new()
+        .title(&format!("Reminder for {} on {} {}, {} EST", command.user.name, month.name(), day, year))
+        .description(&format!("{}", reminder.reminder))
+        .color(Color::DARK_BLUE)
+        .thumbnail(command.user.avatar_url().expect("Expected URL"));
+
+    respond_to_interaction_with_embed(&ctx, &command, &format!("I am creating the following reminder:"), embed).await;
 
     let database_result = get_mongo_client().await;
 
@@ -124,6 +133,7 @@ pub fn register() -> CreateCommand {
             CreateCommandOption::new(CommandOptionType::Integer, "amount", "Amount")
                 .required(true),
         )
+        // TODO add the options here so that they dont have to guess
         .add_option(
             CreateCommandOption::new(CommandOptionType::String, "unit", "Unit Of Measurement")
                 .required(true),
