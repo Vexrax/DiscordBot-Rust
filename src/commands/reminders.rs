@@ -4,12 +4,12 @@ use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
 use std::time::{SystemTime, UNIX_EPOCH, Duration};
 use std::str::FromStr;
-use mongodb::Collection;
 use serde::{Deserialize, Serialize};
 use chrono::prelude::DateTime;
 use chrono::{Datelike, Local, Month};
 use futures::TryStreamExt;
 use mongodb::bson::{Bson, doc, Document};
+use mongodb::results::{DeleteResult, InsertOneResult};
 use serenity::model::Color;
 use crate::utils::discord_message::{respond_to_interaction, respond_to_interaction_with_embed};
 use crate::utils::mongo::get_mongo_client;
@@ -95,31 +95,21 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
 
     // TODO: Maybe have a limit of 10 reminders per person?
 
-    // Format to human readable
-    let timestamp_in_future = SystemTime::now().checked_add(Duration::from_secs(time_in_future_seconds as u64)).expect("Expected the time to be a u64");
-    let datetime = DateTime::<Local>::from(timestamp_in_future); // using locale for now, should find a way to use EST in the future
+    let add_reminder_result = add_reminder_to_collection(reminder.clone()).await;
 
-    let month = Month::try_from(u8::try_from(datetime.month()).unwrap()).expect("Expected Month to be formatted correctly");
-    let day = datetime.day();
-    let year = datetime.year();
-
-    let embed: CreateEmbed = CreateEmbed::new()
-        .title(&format!("Reminder for {} on {} {}, {} EST", command.user.name, month.name(), day, year))
-        .description(&format!("{}", reminder.reminder))
-        .color(Color::DARK_BLUE)
-        .thumbnail(command.user.avatar_url().expect("Expected URL"));
-
-    respond_to_interaction_with_embed(&ctx, &command, &format!("I am creating the following reminder:"), embed).await;
-
-    let database_result = get_mongo_client().await;
-
-    match database_result {
-        Ok(db) => add_reminder_to_collection(db.collection::<Reminder>(REMINDER_DB_NAME), reminder).await,
-        Err(err) => {
-            eprintln!("Error: something went wrong when trying to add a reminder to the DB: {}", err);
+    match add_reminder_result {
+        Some(result) => {
+            respond_to_interaction_with_embed(&ctx,
+                                              &command,
+                                              &format!("I am creating the following reminder:"),
+                                              get_reminder_creation_embed(&command.user, &reminder, time_in_future_seconds as u64))
+                .await;
+        }
+        None => {
+            respond_to_interaction(&ctx, &command, &format!("Something went wrong when trying to save the reminder!"))
+                .await;
         }
     }
-
 }
 
 pub fn register() -> CreateCommand {
@@ -133,9 +123,13 @@ pub fn register() -> CreateCommand {
             CreateCommandOption::new(CommandOptionType::Integer, "amount", "Amount")
                 .required(true),
         )
-        // TODO add the options here so that they dont have to guess
         .add_option(
             CreateCommandOption::new(CommandOptionType::String, "unit", "Unit Of Measurement")
+                .add_string_choice("Minutes", "Minutes")
+                .add_string_choice("Hours", "Hours")
+                .add_string_choice("Days", "Days")
+                .add_string_choice("Months", "Months")
+                .add_string_choice("Years", "Years")
                 .required(true),
         )
 }
@@ -144,7 +138,7 @@ pub async fn check_for_reminders(ctx: &Context) {
 
     let all_reminders: Vec<Reminder>;
 
-    match get_reminders(doc! {  }).await {
+    match get_reminders_from_collection(doc! {  }).await {
         Ok(quote) => all_reminders = quote,
         Err(err) => {
             all_reminders = vec![];
@@ -175,29 +169,61 @@ pub async fn check_for_reminders(ctx: &Context) {
     }
 }
 
-async fn add_reminder_to_collection(collection: Collection<Reminder>, reminder:  Reminder) {
-   collection.insert_one(reminder, None).await.ok();
-}
-
-async fn get_reminders(filter: Document) -> mongodb::error::Result<Vec<Reminder>> {
+async fn get_reminders_from_collection(filter: Document) -> mongodb::error::Result<Vec<Reminder>> {
     let database = get_mongo_client().await?;
     let typed_collection = database.collection::<Reminder>(REMINDER_DB_NAME);
     let cursor = typed_collection.find(filter, None).await?;
     Ok(cursor.try_collect().await.unwrap_or_else(|_| vec![]))
 }
 
-async fn delete_reminder_from_collection(reminder: Reminder) {
+async fn add_reminder_to_collection(reminder:  Reminder) -> Option<InsertOneResult> {
+    let database_result = get_mongo_client().await;
+    let mut result = None;
+    match database_result {
+        Ok(db) => {
+            let collection = db.collection::<Reminder>(REMINDER_DB_NAME);
+            result = collection.insert_one(reminder, None).await.ok();
+        },
+        Err(err) => {
+            eprintln!("Error: something went wrong when trying to add a reminder to the DB: {}", err);
+        }
+    }
+
+    return result;
+}
+
+async fn delete_reminder_from_collection(reminder: Reminder) -> Option<DeleteResult> {
     let database = get_mongo_client().await.expect("Expected to be able to find DB");
     let typed_collection = database.collection::<Reminder>(REMINDER_DB_NAME);
 
+    let mut result = None;
     match typed_collection.delete_one(doc! { "reminder" : reminder.reminder, "user_id": Bson::Int64(reminder.user_id as i64)}, None).await {
         Ok(delete_result) => {
             println!("Deleted {} from the {} db", delete_result.deleted_count, typed_collection.name());
+            result = Some(delete_result);
         },
         Err(err) => {
             eprintln!("Error occurred when deleting reminder: {}", err)
         }
     }
+
+    return result;
+}
+
+fn get_reminder_creation_embed(user: &User, reminder: &Reminder, time_in_future_seconds: u64) -> CreateEmbed {
+    // Format to human readable
+    let timestamp_in_future = SystemTime::now().checked_add(Duration::from_secs(time_in_future_seconds))
+        .expect("Expected the time to be a u64");
+    let datetime = DateTime::<Local>::from(timestamp_in_future); // using locale for now, should find a way to use EST in the future
+    let month = Month::try_from(u8::try_from(datetime.month()).unwrap()).expect("Expected Month to be formatted correctly");
+    let day = datetime.day();
+    let year = datetime.year();
+
+    return CreateEmbed::new()
+        .title(&format!("Reminder for {} on {} {}, {} EST", user.name, month.name(), day, year))
+        .description(&format!("{}", reminder.reminder))
+        .color(Color::DARK_BLUE)
+        .thumbnail(user.avatar_url().expect("Expected URL"));
 }
 
 fn get_second_conversion_factor(unit_from_user: TimeUnit) -> i64 {
