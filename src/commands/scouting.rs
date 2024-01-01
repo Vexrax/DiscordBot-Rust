@@ -100,7 +100,15 @@ fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo>, sum
 
     let mut champs: Vec<(String, String, bool)> = vec![];
     scouting_info.iter().for_each(|champion_info| {
-        let formatted =  format!("W/L = {} | KDA = {}/{}/{} | Customs = {}", champion_info.1.win / champion_info.1.games, champion_info.1.kills, champion_info.1.deaths, champion_info.1.assists, champion_info.1.custom_games);
+        let wr = format!("{:.2}", (champion_info.1.win as f64 / champion_info.1.games as f64) * 100.0);
+        let kda = format!("{:.2}", (champion_info.1.kills as f64 + champion_info.1.assists as f64) / (if champion_info.1.deaths == 0 { 1 } else {champion_info.1.deaths}) as f64);
+        let kills_deaths_assists = format!("{:.1}/{:.1}/{:.1}",
+                                           champion_info.1.kills as f64 / champion_info.1.games as f64,
+                                           champion_info.1.deaths as f64 / champion_info.1.games as f64,
+                                           champion_info.1.assists as f64 / champion_info.1.games as f64);
+
+        // INFO: this uses some invisible characters to format the message! be careful
+        let formatted =  format!(":regional_indicator_w: {}% ⠀⠀⠀:axe: {} ({}) Customs: {}", wr, kda, kills_deaths_assists, champion_info.1.custom_games);
         let title = format!("{} ({})", champion_info.0.name().expect("Expected Name to exist"), champion_info.1.games);
         champs.push((title.parse().unwrap(), formatted, false));
     });
