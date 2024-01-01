@@ -3,7 +3,7 @@ use std::future::Future;
 use serenity::all::{Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbed, CreateMessage, ResolvedOption, ResolvedValue};
 use crate::commands::business::league_of_legends::get_recent_match_data;
 use crate::utils::discord_message::respond_to_interaction;
-use crate::utils::riot_api::{get_riot_account, get_summoner};
+use crate::utils::riot_api::{get_profile_icon_url, get_riot_account, get_summoner};
 use std::time::{SystemTime, Duration};
 use riven::consts::{Champion, ParseChampionError};
 use riven::models::match_v5::{Match, Participant};
@@ -33,9 +33,9 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     respond_to_interaction(ctx, command, &format!("Building a recent scouting report for {}", summoner1).to_string()).await;
 
     // For now lets do 1 to get things working
-    let mut x =summoner1.split("#");
-    let name = x.next().unwrap();
-    let tagline = x.next().unwrap();
+    let mut split_summoner = summoner1.split("#");
+    let name = split_summoner.next().unwrap();
+    let tagline = split_summoner.next().unwrap();
 
     let riot_account;
     match get_riot_account(name, tagline).await {
@@ -95,9 +95,6 @@ pub fn register() -> CreateCommand {
 }
 
 fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo>, summoner: &Summoner, time_range_days: u64) -> CreateEmbed {
-    let ddragon_base = "http://ddragon.leagueoflegends.com/cdn/13.24.1"; //TODO prob need to get this dynamically
-    let ddragon_base_icon = format!("{}/img/profileicon/", ddragon_base);
-
     let mut champs: Vec<(String, String, bool)> = vec![];
     scouting_info.iter().for_each(|champion_info| {
         let wr = format!("{:.2}", (champion_info.1.win as f64 / champion_info.1.games as f64) * 100.0);
@@ -118,7 +115,7 @@ fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo>, sum
         .description(&format!("Scouting report looks at Normals, Ranked and Tournament Draft games"))
         .color(Color::DARK_PURPLE)
         .fields(champs.into_iter())
-        .thumbnail(format!("{}{}.png", ddragon_base_icon, summoner.profile_icon_id));
+        .thumbnail(get_profile_icon_url(summoner.profile_icon_id));
 }
 
 fn build_scouting_info_for_player(match_data: Vec<Match>, puuid: String) -> HashMap<Champion, ScoutingInfo> {

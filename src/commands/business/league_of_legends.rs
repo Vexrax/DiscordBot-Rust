@@ -1,7 +1,8 @@
-use riven::consts::Queue;
+use riven::consts::{Queue, QueueType};
+use riven::models::league_v4::LeagueEntry;
 use riven::models::match_v5::Match;
 use riven::models::summoner_v4::Summoner;
-use crate::utils::riot_api::{get_match_by_id, get_match_ids};
+use crate::utils::riot_api::{get_league_entries, get_match_by_id, get_match_ids};
 
 pub async fn get_recent_match_ids(summoner: Summoner, start_time_epoch_seconds: i64) -> Vec<String> {
     // These are valid queues for the scouting usecase
@@ -46,4 +47,18 @@ pub async fn get_recent_match_data(summoner: Summoner, start_time_epoch_seconds:
     }
 
     return match_data;
+}
+
+pub async fn get_rank_of_player(ecrypted_summoner_id: String, queue_type: QueueType) -> Option<LeagueEntry> {
+    let league_entries = get_league_entries(&ecrypted_summoner_id)
+        .await
+        .expect("Could not find");
+
+    for league in league_entries.iter() {
+        if league.queue_type == queue_type {
+            return Some(league.clone());
+        }
+    }
+
+    None
 }
