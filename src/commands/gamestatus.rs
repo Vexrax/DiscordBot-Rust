@@ -1,11 +1,8 @@
-use std::env;
-
 use riven::models::league_v4::LeagueEntry;
 use serenity::all::{CommandInteraction};
 use serenity::builder::{CreateCommand, CreateEmbed, CreateMessage};
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
-use riven::RiotApi;
 use riven::consts::{QueueType, Team, Champion};
 use riven::models::summoner_v4::Summoner;
 use crate::commands::business::league_of_legends::get_rank_of_player;

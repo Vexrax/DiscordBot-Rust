@@ -26,7 +26,7 @@ struct Quote {
 
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     if let Some(ResolvedOption { value: ResolvedValue::String(name), .. }) = options.first() {
-        get_quote_from(&name.clone().to_string(), ctx, command).await;
+        get_quote_from(&name.to_string().clone(), ctx, command).await;
     } else {
         get_random_quote(ctx, command).await;
     }

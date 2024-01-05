@@ -22,7 +22,7 @@ const RESPONSE_OPTIONS: &[&str] = &[
 ];
 
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
-    if let Some(ResolvedOption { value: ResolvedValue::String(options), .. }) = options.first() {
+    if let Some(ResolvedOption { value: ResolvedValue::String(_options), .. }) = options.first() {
         let response = RESPONSE_OPTIONS[rand::thread_rng().gen_range(0..RESPONSE_OPTIONS.len())].to_string();
         // TODO add the question in here 
         respond_to_interaction(ctx, command, &format!("{response}").to_string()).await;

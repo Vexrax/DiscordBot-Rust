@@ -1,11 +1,10 @@
 use std::collections::HashMap;
-use std::future::Future;
 use serenity::all::{Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbed, CreateMessage, ResolvedOption, ResolvedValue};
 use crate::commands::business::league_of_legends::get_recent_match_data;
 use crate::utils::discord_message::respond_to_interaction;
 use crate::utils::riot_api::{get_profile_icon_url, get_riot_account, get_summoner};
 use std::time::{SystemTime, Duration};
-use riven::consts::{Champion, ParseChampionError};
+use riven::consts::{Champion};
 use riven::models::match_v5::{Match, Participant};
 use riven::models::summoner_v4::Summoner;
 use serde::{Deserialize, Serialize};
@@ -42,7 +41,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
         Ok(riot_account_data) => {
             riot_account = riot_account_data.expect("Expected riot account to exist"); // TODO send message to channel if we cant find the summoner
         },
-        Err(err) => {
+        Err(_err) => {
             eprintln!("Could not find riot account");
             return;
         },

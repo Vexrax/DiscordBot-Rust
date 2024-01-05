@@ -98,7 +98,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     let add_reminder_result = add_reminder_to_collection(reminder.clone()).await;
 
     match add_reminder_result {
-        Some(result) => {
+        Some(_result) => {
             respond_to_interaction_with_embed(&ctx,
                                               &command,
                                               &format!("I am creating the following reminder:"),

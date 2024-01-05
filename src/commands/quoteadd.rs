@@ -1,7 +1,6 @@
 use mongodb::Collection;
 use serde::{Deserialize, Serialize};
 use mongodb::bson::doc;
-use serenity::prelude::*;
 
 use serenity::all::{CommandInteraction, ResolvedValue, CommandOptionType};
 use serenity::builder::{CreateCommand, CreateCommandOption};
