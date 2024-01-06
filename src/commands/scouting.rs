@@ -5,6 +5,7 @@ use crate::utils::discord_message::respond_to_interaction;
 use crate::utils::riot_api::{get_profile_icon_url, get_riot_account, get_summoner};
 use std::time::{SystemTime, Duration};
 use riven::consts::{Champion};
+use riven::models::account_v1::Account;
 use riven::models::match_v5::{Match, Participant};
 use riven::models::summoner_v4::Summoner;
 use serde::{Deserialize, Serialize};
@@ -19,52 +20,63 @@ struct ScoutingInfo {
     assists: i32,
     custom_games: i32,
 }
+struct RiotId {
+    name: String,
+    tagline: String,
+}
 
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
-    let summoner1: String;
-    if let Some(ResolvedOption { value: ResolvedValue::String(reminder_option), .. }) = options.get(0) {
-        summoner1 = reminder_option.to_string();
-    } else {
-        respond_to_interaction(&ctx, &command, &format!("Expected summoner1 to be specified").to_string()).await;
-        return;
-    }
-
-    respond_to_interaction(ctx, command, &format!("Building a recent scouting report for {}", summoner1).to_string()).await;
-
-    // For now lets do 1 to get things working
-    let mut split_summoner = summoner1.split("#");
-    let name = split_summoner.next().unwrap();
-    let tagline = split_summoner.next().unwrap();
-
-    let riot_account;
-    match get_riot_account(name, tagline).await {
-        Ok(riot_account_data) => {
-            riot_account = riot_account_data.expect("Expected riot account to exist"); // TODO send message to channel if we cant find the summoner
-        },
-        Err(_err) => {
-            eprintln!("Could not find riot account");
-            return;
-        },
-    }
-
-    let summoner;
-    match get_summoner(&riot_account).await {
-        Ok(summoner_data) => {
-            summoner = summoner_data;
+    let riot_ids_inputs = get_riot_ids_from_options(options);
+    let mut failed_riot_ids: Vec<String> = vec![];
+    respond_to_interaction(ctx, command, &format!("Building a recent scouting report for {:?}", riot_ids_inputs).to_string()).await;
+    for riot_id_input in riot_ids_inputs {
+        // TODO there has to be a better way to do this input sanitization right?
+        let riot_id;
+        match get_riot_id_from_string(&riot_id_input) {
+            Some(riot_id_data) => riot_id = riot_id_data,
+            None => {
+                failed_riot_ids.push(riot_id_input);
+                continue;
+            }
         }
-        Err(err) => {
-            eprintln!("Could not find summoner");
-            return;
-        },
+
+        let riot_account;
+        match get_riot_account(riot_id.name.as_str(), riot_id.tagline.as_str()).await {
+            Ok(maybe_riot_account_data) => {
+                match maybe_riot_account_data {
+                    Some(riot_account_data) => riot_account = riot_account_data,
+                    None => {
+                        failed_riot_ids.push(riot_id_input);
+                        continue;
+                    },
+                }
+            }
+            Err(_err) => {
+                failed_riot_ids.push(riot_id_input);
+                continue;
+            },
+        }
+
+        let summoner;
+        match get_summoner(&riot_account).await {
+            Ok(summoner_data) => summoner = summoner_data,
+            Err(_) => {
+                failed_riot_ids.push(riot_id_input);
+                continue;
+            },
+        }
+
+        let days_ago: u64 = 30;
+        let start_time_epoch_seconds = (SystemTime::now() - Duration::from_secs(days_ago * 24 * 60 * 60)).duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
+
+        let match_data = get_recent_match_data(summoner.clone(), start_time_epoch_seconds as i64).await;
+
+        let embed = build_embed_for_summoner(&build_scouting_info_for_player(match_data, riot_account.puuid), &summoner, days_ago);
+        command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await.expect("TODO: panic message");
     }
 
-    let days_ago: u64 = 30;
-    let start_time_epoch_seconds = (SystemTime::now() - Duration::from_secs(days_ago * 24 * 60 * 60)).duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
+    command.channel_id.say(&ctx.http, &format!("The following summoners failed {:?}", failed_riot_ids).to_string()).await.expect("TODO: panic message");
 
-    let match_data = get_recent_match_data(summoner.clone(), start_time_epoch_seconds as i64).await;
-
-    let embed = build_embed_for_summoner(&build_scouting_info_for_player(match_data, riot_account.puuid), &summoner, days_ago);
-    command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await.expect("TODO: panic message");
 }
 
 pub fn register() -> CreateCommand {
@@ -75,19 +87,19 @@ pub fn register() -> CreateCommand {
                 .required(true),
         )
         .add_option(
-            CreateCommandOption::new(CommandOptionType::Integer, "summoner2", "summoner2")
+            CreateCommandOption::new(CommandOptionType::String, "summoner2", "summoner2")
                 .required(false),
         )
         .add_option(
-            CreateCommandOption::new(CommandOptionType::Integer, "summoner3", "summoner3")
+            CreateCommandOption::new(CommandOptionType::String, "summoner3", "summoner3")
                 .required(false),
         )
         .add_option(
-            CreateCommandOption::new(CommandOptionType::Integer, "summoner4", "summoner4")
+            CreateCommandOption::new(CommandOptionType::String, "summoner4", "summoner4")
                 .required(false),
         )
         .add_option(
-            CreateCommandOption::new(CommandOptionType::Integer, "summoner5", "summoner5")
+            CreateCommandOption::new(CommandOptionType::String, "summoner5", "summoner5")
                 .required(false),
         )
 
@@ -162,5 +174,38 @@ fn build_scouting_info_for_single_match(participants: Vec<Participant>, puuid: S
         } else {
             None
         }
+    })
+}
+
+fn get_riot_ids_from_options(options: &[ResolvedOption<'_>]) -> Vec<String> {
+    let mut riot_ids: Vec<String> = vec![];
+    options.iter().for_each(|option1| {
+        match option1.value {
+            ResolvedValue::String(val) => {
+                riot_ids.push(val.to_string());
+            }
+            _ => {}
+        }
+    });
+    return riot_ids;
+}
+
+fn get_riot_id_from_string(riot_id: &String) -> Option<RiotId> {
+    let mut split_summoner = riot_id.split("#");
+    let riot_account_name;
+    match split_summoner.next() {
+        Some(name) => riot_account_name = name,
+        None => return None
+    }
+
+    let riot_account_tagline;
+    match split_summoner.next() {
+        Some(tagline) => riot_account_tagline = tagline,
+        None => return None
+    }
+
+    Some(RiotId {
+       name: riot_account_name.to_string(),
+       tagline: riot_account_tagline.to_string()
     })
 }
