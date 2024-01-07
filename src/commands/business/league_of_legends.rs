@@ -35,8 +35,8 @@ pub async fn get_recent_match_ids_for_queue(puuid: &str, queue: Queue, start_tim
 
 async fn get_match_ids_for(puuid: &str, queue: Queue, start_time_epoch_seconds: i64, start_index: i32, amount_to_search_for: i32) -> Vec<String> {
     return match get_match_ids(puuid, queue, start_time_epoch_seconds, start_index, amount_to_search_for).await {
-        Ok(matches) => { matches }
-        Err(err) => { vec![] }
+        Some(matches) => { matches }
+        None => { vec![] }
     }
 }
 
@@ -45,10 +45,8 @@ pub async fn get_recent_match_data(summoner: Summoner, start_time_epoch_seconds:
     let mut match_data: Vec<Match> = vec![];
     for match_id in recent_match_ids {
         match get_match_by_id(&*match_id).await {
-            Ok(match_data_from_api) => { match_data.push(match_data_from_api.unwrap()); }
-            Err(err) => {
-                // Do nothing, the match doesnt exist;
-            }
+            Some(match_data_from_api) => match_data.push(match_data_from_api),
+            None => {}
         }
     }
 
@@ -56,9 +54,11 @@ pub async fn get_recent_match_data(summoner: Summoner, start_time_epoch_seconds:
 }
 
 pub async fn get_rank_of_player(ecrypted_summoner_id: String, queue_type: QueueType) -> Option<LeagueEntry> {
-    let league_entries = get_league_entries(&ecrypted_summoner_id)
-        .await
-        .expect("Could not find");
+    let league_entries;
+    match get_league_entries(&ecrypted_summoner_id).await {
+        Some(league_entries_from_api) => league_entries = league_entries_from_api,
+        None => return None
+    }
 
     for league in league_entries.iter() {
         if league.queue_type == queue_type {
@@ -70,22 +70,13 @@ pub async fn get_rank_of_player(ecrypted_summoner_id: String, queue_type: QueueT
 }
 
 pub async fn get_summoner_by_riot_id(riot_id: RiotId) -> Option<Summoner> {
-    let riot_account_maybe;
-    match get_riot_account(&riot_id.name, &riot_id.tagline).await {
-        Ok(riot_acc) => riot_account_maybe = riot_acc,
-        Err(err) => return None
-    }
-
     let riot_account;
-    match riot_account_maybe {
+    match get_riot_account(&riot_id.name, &riot_id.tagline).await {
         Some(riot_acc) => riot_account = riot_acc,
         None => return None
     }
 
-    match get_summoner(&riot_account).await {
-        Ok(riot_summ_maybe) =>Some(riot_summ_maybe),
-        Err(err) => return None
-    }
+    return get_summoner(&riot_account).await;
 }
 
 pub async fn get_summoners_by_riot_ids(riot_ids: Vec<RiotId>) -> Vec<Summoner> {
@@ -100,8 +91,5 @@ pub async fn get_summoners_by_riot_ids(riot_ids: Vec<RiotId>) -> Vec<Summoner> {
 }
 
 pub async fn get_current_match_by_riot_summoner(riot_summoner: &Summoner) -> Option<CurrentGameInfo> {
-    match get_current_match(&riot_summoner).await {
-        Ok(maybe_current_match) => return maybe_current_match,
-        Err(_) => return None
-    }
+    return get_current_match(&riot_summoner).await;
 }

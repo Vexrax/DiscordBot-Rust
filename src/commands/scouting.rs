@@ -37,16 +37,8 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
 
         let riot_account;
         match get_riot_account(riot_id.name.as_str(), riot_id.tagline.as_str()).await {
-            Ok(maybe_riot_account_data) => {
-                match maybe_riot_account_data {
-                    Some(riot_account_data) => riot_account = riot_account_data,
-                    None => {
-                        failed_riot_ids.push(riot_id_input);
-                        continue;
-                    },
-                }
-            }
-            Err(_err) => {
+            Some(riot_account_data) => riot_account = riot_account_data,
+            None => {
                 failed_riot_ids.push(riot_id_input);
                 continue;
             },
@@ -54,8 +46,8 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
 
         let summoner;
         match get_summoner(&riot_account).await {
-            Ok(summoner_data) => summoner = summoner_data,
-            Err(_) => {
+            Some(summoner_data) => summoner = summoner_data,
+            None => {
                 failed_riot_ids.push(riot_id_input);
                 continue;
             },
@@ -70,6 +62,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
         command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await.expect("TODO: panic message");
     }
 
+    // TODO conditional if theres actually failed summoners
     command.channel_id.say(&ctx.http, &format!("The following summoners failed {:?}", failed_riot_ids).to_string()).await.expect("TODO: panic message");
 
 }
