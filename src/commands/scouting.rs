@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 use serenity::all::{Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbed, CreateMessage, ResolvedOption, ResolvedValue};
-use crate::commands::business::league_of_legends::get_recent_match_data;
+use crate::commands::business::league_of_legends::{get_recent_match_data, RiotId};
 use crate::utils::discord_message::respond_to_interaction;
 use crate::utils::riot_api::{get_profile_icon_url, get_riot_account, get_summoner};
 use std::time::{SystemTime, Duration};
 use riven::consts::{Champion};
-use riven::models::account_v1::Account;
 use riven::models::match_v5::{Match, Participant};
 use riven::models::summoner_v4::Summoner;
 use serde::{Deserialize, Serialize};
@@ -19,10 +18,6 @@ struct ScoutingInfo {
     deaths: i32,
     assists: i32,
     custom_games: i32,
-}
-struct RiotId {
-    name: String,
-    tagline: String,
 }
 
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
@@ -116,7 +111,7 @@ fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo>, sum
                                            champion_info.1.assists as f64 / champion_info.1.games as f64);
 
         // INFO: this uses some invisible characters to format the message! be careful
-        let formatted =  format!(":regional_indicator_w: {}% ⠀⠀⠀:axe: {} ({}) Customs: {}", wr, kda, kills_deaths_assists, champion_info.1.custom_games);
+        let formatted =  format!(":regional_indicator_w: {}% ⠀⠀⠀:axe: {} ({})", wr, kda, kills_deaths_assists);
         let title = format!("{} ({})", champion_info.0.name().expect("Expected Name to exist"), champion_info.1.games);
         champs.push((title.parse().unwrap(), formatted, false));
     });

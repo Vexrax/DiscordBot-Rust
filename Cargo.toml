@@ -15,3 +15,4 @@ serde = { version = "1.0", features = ["derive"] }
 riven = "2.27"
 chrono = "0.4.31"
 time = "0.3.30"
+queues = "1.0.2"

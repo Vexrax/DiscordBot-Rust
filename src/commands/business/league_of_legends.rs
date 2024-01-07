@@ -1,8 +1,14 @@
 use riven::consts::{Queue, QueueType};
 use riven::models::league_v4::LeagueEntry;
 use riven::models::match_v5::Match;
+use riven::models::spectator_v4::CurrentGameInfo;
 use riven::models::summoner_v4::Summoner;
-use crate::utils::riot_api::{get_league_entries, get_match_by_id, get_match_ids};
+use crate::utils::riot_api::{get_current_match, get_league_entries, get_match_by_id, get_match_ids, get_riot_account, get_summoner};
+
+pub struct RiotId {
+    pub(crate) name: String,
+    pub(crate) tagline: String,
+}
 
 pub async fn get_recent_match_ids(summoner: Summoner, start_time_epoch_seconds: i64) -> Vec<String> {
     // These are valid queues for the scouting usecase
@@ -61,4 +67,41 @@ pub async fn get_rank_of_player(ecrypted_summoner_id: String, queue_type: QueueT
     }
 
     None
+}
+
+pub async fn get_summoner_by_riot_id(riot_id: RiotId) -> Option<Summoner> {
+    let riot_account_maybe;
+    match get_riot_account(&riot_id.name, &riot_id.tagline).await {
+        Ok(riot_acc) => riot_account_maybe = riot_acc,
+        Err(err) => return None
+    }
+
+    let riot_account;
+    match riot_account_maybe {
+        Some(riot_acc) => riot_account = riot_acc,
+        None => return None
+    }
+
+    match get_summoner(&riot_account).await {
+        Ok(riot_summ_maybe) =>Some(riot_summ_maybe),
+        Err(err) => return None
+    }
+}
+
+pub async fn get_summoners_by_riot_ids(riot_ids: Vec<RiotId>) -> Vec<Summoner> {
+    let mut summoners = vec![];
+    for riot_id in riot_ids {
+        match get_summoner_by_riot_id(riot_id).await {
+            Some(summoner) => summoners.push(summoner),
+            None => {}
+        }
+    }
+    return summoners;
+}
+
+pub async fn get_current_match_by_riot_summoner(riot_summoner: &Summoner) -> Option<CurrentGameInfo> {
+    match get_current_match(&riot_summoner).await {
+        Ok(maybe_current_match) => return maybe_current_match,
+        Err(_) => return None
+    }
 }
