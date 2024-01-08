@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use serenity::all::{Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbed, CreateMessage, ResolvedOption, ResolvedValue};
-use crate::commands::business::league_of_legends::{get_recent_match_data, RiotId};
+use crate::commands::business::league_of_legends::{get_recent_match_data, get_riot_id_from_string, RiotId};
 use crate::utils::discord_message::respond_to_interaction;
 use crate::utils::riot_api::{get_profile_icon_url, get_riot_account, get_summoner};
 use std::time::{SystemTime, Duration};
@@ -62,9 +62,9 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
         command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await.expect("TODO: panic message");
     }
 
-    // TODO conditional if theres actually failed summoners
-    command.channel_id.say(&ctx.http, &format!("The following summoners failed {:?}", failed_riot_ids).to_string()).await.expect("TODO: panic message");
-
+    if failed_riot_ids.len() > 0 {
+        command.channel_id.say(&ctx.http, &format!("The following summoners failed {:?}", failed_riot_ids).to_string()).await.expect("TODO: panic message");
+    }
 }
 
 pub fn register() -> CreateCommand {
@@ -176,24 +176,4 @@ fn get_riot_ids_from_options(options: &[ResolvedOption<'_>]) -> Vec<String> {
         }
     });
     return riot_ids;
-}
-
-fn get_riot_id_from_string(riot_id: &String) -> Option<RiotId> {
-    let mut split_summoner = riot_id.split("#");
-    let riot_account_name;
-    match split_summoner.next() {
-        Some(name) => riot_account_name = name,
-        None => return None
-    }
-
-    let riot_account_tagline;
-    match split_summoner.next() {
-        Some(tagline) => riot_account_tagline = tagline,
-        None => return None
-    }
-
-    Some(RiotId {
-       name: riot_account_name.to_string(),
-       tagline: riot_account_tagline.to_string()
-    })
 }

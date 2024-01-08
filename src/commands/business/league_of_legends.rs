@@ -93,3 +93,23 @@ pub async fn get_summoners_by_riot_ids(riot_ids: Vec<RiotId>) -> Vec<Summoner> {
 pub async fn get_current_match_by_riot_summoner(riot_summoner: &Summoner) -> Option<CurrentGameInfo> {
     return get_current_match(&riot_summoner).await;
 }
+
+pub fn get_riot_id_from_string(riot_id: &String) -> Option<RiotId> {
+    let mut split_summoner = riot_id.split("#");
+    let riot_account_name;
+    match split_summoner.next() {
+        Some(name) => riot_account_name = name,
+        None => return None
+    }
+
+    let riot_account_tagline;
+    match split_summoner.next() {
+        Some(tagline) => riot_account_tagline = tagline,
+        None => return None
+    }
+
+    Some(crate::commands::business::league_of_legends::RiotId {
+        name: riot_account_name.to_string(),
+        tagline: riot_account_tagline.to_string()
+    })
+}

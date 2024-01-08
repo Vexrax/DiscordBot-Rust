@@ -7,7 +7,7 @@ use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
 use riven::consts::{QueueType, Team, Champion};
 use riven::models::summoner_v4::Summoner;
-use crate::commands::business::league_of_legends::{get_current_match_by_riot_summoner, get_rank_of_player, get_summoners_by_riot_ids, RiotId};
+use crate::commands::business::league_of_legends::{get_current_match_by_riot_summoner, get_rank_of_player, get_riot_id_from_string, get_summoners_by_riot_ids, RiotId};
 use queues::*;
 
 use crate::utils::discord_message::respond_to_interaction;
@@ -20,19 +20,18 @@ struct MatchPlayer {
     team_id: Team,
     summoner_name: String,
 }
+
+const PLAYERS_IDS: [&str; 4] = ["Vexrax#FAKER", "Zafa#NA1", "Earleking#NA1", "rgrou2#NA1"];
 pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     respond_to_interaction(&ctx, &command, &format!("Checking to see if anyone in boosted is in game...").to_string()).await;
+    let mut players: Vec<RiotId> = vec![];
 
-    let players: Vec<RiotId> = vec![
-        RiotId {
-            name: "Zafa".to_string(),
-            tagline: "NA1".to_string(),
-        },
-        RiotId {
-            name: "Vexrax".to_string(),
-            tagline: "FAKER".to_string(),
+    for player_id_input in PLAYERS_IDS {
+        match get_riot_id_from_string(&player_id_input.to_string()) {
+            None => {},
+            Some(riotId) => players.push(riotId)
         }
-    ];
+    }
 
     let summoners = get_summoners_by_riot_ids(players).await;
     let mut matches_generated = HashSet::new();
