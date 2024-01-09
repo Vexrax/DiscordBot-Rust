@@ -95,23 +95,33 @@ pub fn register() -> CreateCommand {
 
 fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo>, summoner: &Summoner, time_range_days: u64) -> CreateEmbed {
     let mut champs: Vec<(String, String, bool)> = vec![];
-    scouting_info.iter().for_each(|champion_info| {
+    let mut total_games = 0;
+
+    let mut scouting_vec: Vec<_> = scouting_info.into_iter().collect();
+    scouting_vec.sort_by_key(|&(_, ref info)| std::cmp::Reverse(info.games));
+
+
+    scouting_vec.iter().for_each(|champion_info| {
         let wr = format!("{:.2}", (champion_info.1.win as f64 / champion_info.1.games as f64) * 100.0);
         let kda = format!("{:.2}", (champion_info.1.kills as f64 + champion_info.1.assists as f64) / (if champion_info.1.deaths == 0 { 1 } else {champion_info.1.deaths}) as f64);
         let kills_deaths_assists = format!("{:.1}/{:.1}/{:.1}",
                                            champion_info.1.kills as f64 / champion_info.1.games as f64,
                                            champion_info.1.deaths as f64 / champion_info.1.games as f64,
                                            champion_info.1.assists as f64 / champion_info.1.games as f64);
+        total_games += champion_info.1.games;
 
-        // INFO: this uses some invisible characters to format the message! be careful
-        let formatted =  format!(":regional_indicator_w: {}% ⠀⠀⠀:axe: {} ({})", wr, kda, kills_deaths_assists);
-        let title = format!("{} ({})", champion_info.0.name().expect("Expected Name to exist"), champion_info.1.games);
-        champs.push((title.parse().unwrap(), formatted, false));
+        // Discord only supports 25 fields max
+        if champs.len() < 25 {
+            // INFO: this uses some invisible characters to format the message! be careful
+            let formatted =  format!(":regional_indicator_w::regional_indicator_r: {}% ⠀⠀⠀:axe: {} ({})", wr, kda, kills_deaths_assists);
+            let title = format!("{} ({})", champion_info.0.name().expect("Expected Name to exist"), champion_info.1.games);
+            champs.push((title.parse().unwrap(), formatted, false));
+        }
     });
 
     return CreateEmbed::new()
         .title(&format!("Scouting report for {} for the last {} days", summoner.name, time_range_days))
-        .description(&format!("Scouting report looks at Normals, Ranked and Tournament Draft games"))
+        .description(&format!("Games: {}. Scouting report looks at Normals, Ranked and Tournament Draft games", total_games))
         .color(Color::DARK_PURPLE)
         .fields(champs.into_iter())
         .thumbnail(get_profile_icon_url(summoner.profile_icon_id));
