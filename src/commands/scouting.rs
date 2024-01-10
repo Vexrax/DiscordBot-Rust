@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use serenity::all::{Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbed, CreateMessage, ResolvedOption, ResolvedValue};
+use serenity::all::{Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbed, CreateEmbedFooter, CreateMessage, ResolvedOption, ResolvedValue};
 use crate::commands::business::league_of_legends::{get_recent_match_data, get_riot_id_from_string, RiotId};
 use crate::utils::discord_message::respond_to_interaction;
 use crate::utils::riot_api::{get_profile_icon_url, get_riot_account, get_summoner};
@@ -121,9 +121,10 @@ fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo>, sum
 
     return CreateEmbed::new()
         .title(&format!("Scouting report for {} for the last {} days", summoner.name, time_range_days))
-        .description(&format!("Games: {}. Scouting report looks at Normals, Ranked and Tournament Draft games", total_games))
+        .description(&format!("Games: {}. Report looks at Normals, Ranked and Tournament Draft games", total_games))
         .color(Color::DARK_PURPLE)
         .fields(champs.into_iter())
+        .footer(CreateEmbedFooter::new("TODO info about pagination"))
         .thumbnail(get_profile_icon_url(summoner.profile_icon_id));
 }
 
