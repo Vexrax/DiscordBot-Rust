@@ -95,7 +95,7 @@ pub fn register() -> CreateCommand {
 
 fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo>, summoner: &Summoner, time_range_days: u64) -> CreateEmbed {
     let mut champs: Vec<(String, String, bool)> = vec![];
-    let mut total_games = 0;
+    let mut total_games: i32 = 0;
 
     let mut scouting_vec: Vec<_> = scouting_info.into_iter().collect();
     scouting_vec.sort_by_key(|&(_, ref info)| std::cmp::Reverse(info.games));
