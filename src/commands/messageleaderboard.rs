@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use futures::StreamExt;
 use serenity::all::{ChannelId, CommandInteraction, GetMessages, User};
 use serenity::builder::{CreateCommand};
 use serenity::client::Context;

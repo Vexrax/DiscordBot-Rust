@@ -4,7 +4,6 @@ use futures::stream::TryStreamExt;
 use serde::{Deserialize, Serialize};
 use mongodb::bson::doc;
 use serenity::model::prelude::ChannelId;
-use serenity::prelude::*;
 
 use serenity::all::{CommandInteraction, ResolvedValue, CommandOptionType};
 use serenity::builder::{CreateCommand, CreateCommandOption, CreateMessage, CreateEmbed};

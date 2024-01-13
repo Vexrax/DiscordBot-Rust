@@ -29,7 +29,7 @@ pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &Comma
     for player_id_input in PLAYERS_IDS {
         match get_riot_id_from_string(&player_id_input.to_string()) {
             None => {},
-            Some(riotId) => players.push(riotId)
+            Some(riot_id) => players.push(riot_id)
         }
     }
 
@@ -70,9 +70,9 @@ fn build_embed(main_player_riot_summoner: Summoner, match_players: Vec<MatchPlay
 
     for match_player in match_players {
         if match_player.team_id == Team::BLUE {
-            red_queue.add(match_player);
+            let _ = red_queue.add(match_player);
         } else if match_player.team_id == Team::RED {
-            blue_queue.add(match_player);
+            let _ = blue_queue.add(match_player);
         }
     }
 

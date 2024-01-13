@@ -27,7 +27,7 @@ impl EventHandler for Handler {
 
         // ctx.set_presence(Some(Activity::playing("Taking Over The World")), OnlineStatus::Online).await;
 
-        let commands = guild_id
+        let _commands = guild_id
             .set_commands(&ctx.http, vec![
                 commands::roledice::register(),
                 commands::reminders::register(),
@@ -61,7 +61,7 @@ impl EventHandler for Handler {
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::Command(command) = interaction {
-            let content = match command.data.name.as_str() {
+            let _content = match command.data.name.as_str() {
                 "rolldice" => {
                     commands::roledice::run(&command.data.options(), &ctx, &command).await;
                     None

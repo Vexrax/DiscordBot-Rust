@@ -3,7 +3,6 @@ use std::error::Error;
 use futures::stream::TryStreamExt;
 use serde::{Deserialize, Serialize};
 use mongodb::{bson::doc};
-use serenity::prelude::*;
 
 use serenity::all::{CommandInteraction};
 use serenity::builder::{CreateCommand, CreateEmbed, CreateMessage};
