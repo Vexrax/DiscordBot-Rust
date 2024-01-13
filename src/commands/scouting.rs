@@ -1,3 +1,4 @@
+use std::cmp;
 use std::collections::HashMap;
 use serenity::all::{Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbed, CreateEmbedFooter, CreateMessage, ResolvedOption, ResolvedValue};
 use crate::commands::business::league_of_legends::{get_recent_match_data, get_riot_id_from_string};
@@ -103,7 +104,7 @@ fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo>, sum
 
     scouting_vec.iter().for_each(|champion_info| {
         let wr = format!("{:.2}", (champion_info.1.win as f64 / champion_info.1.games as f64) * 100.0);
-        let kda = format!("{:.2}", (champion_info.1.kills as f64 + champion_info.1.assists as f64) / (if champion_info.1.deaths == 0 { 1 } else {champion_info.1.deaths}) as f64);
+        let kda = format!("{:.2}", (champion_info.1.kills as f64 + champion_info.1.assists as f64) / cmp::max(champion_info.1.deaths, 1) as f64);
         let kills_deaths_assists = format!("{:.1}/{:.1}/{:.1}",
                                            champion_info.1.kills as f64 / champion_info.1.games as f64,
                                            champion_info.1.deaths as f64 / champion_info.1.games as f64,
