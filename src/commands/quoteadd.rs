@@ -1,24 +1,14 @@
 use mongodb::Collection;
-use serde::{Deserialize, Serialize};
-use mongodb::bson::doc;
 
 use serenity::all::{CommandInteraction, ResolvedValue, CommandOptionType};
 use serenity::builder::{CreateCommand, CreateCommandOption};
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
+use crate::commands::business::quote::Quote;
 
 use crate::utils::discord_message::respond_to_interaction;
 use crate::utils::mongo::get_mongo_client;
 use crate::utils::string_utils::capitalize;
-
-// TODO commonize this with the one in quote 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-struct Quote {
-    quote: String,
-    year: String,
-    author: String,
-    context: String,
-}
 
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     let quote: String;
