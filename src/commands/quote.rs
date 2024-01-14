@@ -4,7 +4,7 @@ use futures::stream::TryStreamExt;
 use mongodb::bson::doc;
 use serenity::model::prelude::ChannelId;
 
-use serenity::all::{CommandInteraction, ResolvedValue, CommandOptionType};
+use serenity::all::{CommandInteraction, ResolvedValue, CommandOptionType, CreateEmbedFooter, Color};
 use serenity::builder::{CreateCommand, CreateCommandOption, CreateMessage, CreateEmbed};
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
@@ -23,7 +23,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
 }
 
 async fn get_quote_from(name: &String, ctx: &Context, command: &CommandInteraction) {
-    respond_to_interaction(&ctx, &command, &format!("getting a quote from {}. . .", name).to_string()).await;
+    respond_to_interaction(&ctx, &command, &format!("getting a quote from {}...", name).to_string()).await;
 
     let all_quotes: Vec<Quote>;
 
@@ -64,12 +64,14 @@ async fn send_quote_in_channel(ctx: &Context, channel_id: &ChannelId, quotes: Ve
             let _msg = channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
         }
         Some(quote) => {
-            let embed = CreateEmbed::new().title("").description(&format!("{} -{} {} {}", quote.quote, quote.author, quote.context, quote.year));
+            let embed = CreateEmbed::new()
+                .title("Quote")
+                .description(&format!("{}", quote.quote))
+                .color(Color::ROHRKATZE_BLUE)
+                .footer(CreateEmbedFooter::new(format!("{} {}, {}", quote.author, quote.context, quote.year)));
             let _msg = channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
         }
     }
-
-
 }
 
 async fn get_quotes(filter: Document) -> mongodb::error::Result<Vec<Quote>> {
