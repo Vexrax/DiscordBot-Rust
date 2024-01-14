@@ -21,7 +21,12 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
         get_random_quote(ctx, command).await;
     }
 }
-
+pub fn register() -> CreateCommand {
+    CreateCommand::new("quote").description("Gets a quote").add_option(
+        CreateCommandOption::new(CommandOptionType::String, "from", "from who")
+            .required(false),
+    )
+}
 async fn get_quote_from(name: &String, ctx: &Context, command: &CommandInteraction) {
     respond_to_interaction(&ctx, &command, &format!("getting a quote from {}...", name).to_string()).await;
 
@@ -81,9 +86,3 @@ async fn get_quotes(filter: Document) -> mongodb::error::Result<Vec<Quote>> {
     Ok(cursor.try_collect().await.unwrap_or_else(|_| vec![]))
 }
 
-pub fn register() -> CreateCommand {
-    CreateCommand::new("quote").description("Gets a quote").add_option(
-        CreateCommandOption::new(CommandOptionType::String, "from", "from who")
-            .required(false),
-    )
-}
