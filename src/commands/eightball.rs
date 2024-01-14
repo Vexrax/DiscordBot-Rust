@@ -1,10 +1,10 @@
-use serenity::all::{CommandInteraction, ResolvedValue, CommandOptionType};
+use serenity::all::{CommandInteraction, ResolvedValue, CommandOptionType, CreateEmbed, Color};
 use serenity::builder::{CreateCommand, CreateCommandOption};
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
 use rand::Rng;
 
-use crate::utils::discord_message::respond_to_interaction;
+use crate::utils::discord_message::{respond_to_interaction, respond_to_interaction_with_embed};
 
 const RESPONSE_OPTIONS: &[&str] = &[
     "As I see it, yes.",
@@ -22,10 +22,15 @@ const RESPONSE_OPTIONS: &[&str] = &[
 ];
 
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
-    if let Some(ResolvedOption { value: ResolvedValue::String(_options), .. }) = options.first() {
+    if let Some(ResolvedOption { value: ResolvedValue::String(question), .. }) = options.first() {
         let response = RESPONSE_OPTIONS[rand::thread_rng().gen_range(0..RESPONSE_OPTIONS.len())].to_string();
-        // TODO add the question in here 
-        respond_to_interaction(ctx, command, &format!("{response}").to_string()).await;
+
+        let embed = CreateEmbed::new()
+            .title(format!("Question: {}", question))
+            .description(format!("Answer: {response}").to_string())
+            .color(Color::RED);
+
+        respond_to_interaction_with_embed(ctx, command, &"".to_string(), embed).await;
     } else {
         respond_to_interaction(ctx, command, &format!("Please ask a question").to_string()).await;
     }
