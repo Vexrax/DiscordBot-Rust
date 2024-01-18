@@ -4,7 +4,7 @@ use serenity::all::{CommandInteraction, ResolvedValue, CommandOptionType};
 use serenity::builder::{CreateCommand, CreateCommandOption};
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
-use crate::commands::business::quote::Quote;
+use crate::commands::business::quote::{Quote, QUOTE_DB_NAME};
 
 use crate::utils::discord_message::respond_to_interaction;
 use crate::utils::mongo::get_mongo_client;
@@ -56,7 +56,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     let database_result = get_mongo_client().await;
 
     match database_result {
-        Ok(db) => add_quote_to_collection(db.collection::<Quote>("Quotes"), quote_to_add).await,
+        Ok(db) => add_quote_to_collection(db.collection::<Quote>(QUOTE_DB_NAME), quote_to_add).await,
         Err(err) => {
             eprintln!("Error: something went wrong when trying to add a quote to the DB: {}", err);
         }

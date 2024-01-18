@@ -8,7 +8,7 @@ use serenity::all::{CommandInteraction, ResolvedValue, CommandOptionType, Create
 use serenity::builder::{CreateCommand, CreateCommandOption, CreateMessage, CreateEmbed};
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
-use crate::commands::business::quote::Quote;
+use crate::commands::business::quote::{Quote, QUOTE_DB_NAME};
 
 use crate::utils::discord_message::respond_to_interaction;
 use crate::utils::mongo::get_mongo_client;
@@ -81,7 +81,7 @@ async fn send_quote_in_channel(ctx: &Context, channel_id: &ChannelId, quotes: Ve
 
 async fn get_quotes(filter: Document) -> mongodb::error::Result<Vec<Quote>> {
     let database = get_mongo_client().await?;
-    let typed_collection = database.collection::<Quote>("Quotes");
+    let typed_collection = database.collection::<Quote>(QUOTE_DB_NAME);
     let cursor = typed_collection.find(filter, None).await?;
     Ok(cursor.try_collect().await.unwrap_or_else(|_| vec![]))
 }
