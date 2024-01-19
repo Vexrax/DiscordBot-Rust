@@ -10,10 +10,10 @@ pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &Comma
     let num: i32 = rand::thread_rng().gen_range(0..2);
 
     let result;
-    if num == 1 {
-        result = "heads";
-    } else {
-        result = "tails"
+    match num {
+        1 => result = "heads",
+        2 => result = "tails",
+        _ => {}
     }
 
     respond_to_interaction(ctx, command, &format!("The coin landed on {}", result).to_string()).await;
