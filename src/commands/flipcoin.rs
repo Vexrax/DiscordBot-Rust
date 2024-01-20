@@ -9,14 +9,13 @@ use crate::utils::discord_message::respond_to_interaction;
 pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     let num: i32 = rand::thread_rng().gen_range(0..2);
 
-    let result;
     match num {
-        1 => result = "heads",
-        2 => result = "tails",
+        1 => respond_to_interaction(ctx, command, &format!("The coin landed on heads").to_string()).await,
+        2 => respond_to_interaction(ctx, command, &format!("The coin landed on tails").to_string()).await,
         _ => {}
     }
 
-    respond_to_interaction(ctx, command, &format!("The coin landed on {}", result).to_string()).await;
+    ;
 }
 
 pub fn register() -> CreateCommand {
