@@ -59,7 +59,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
 
         let match_data = get_recent_match_data(summoner.clone(), start_time_epoch_seconds as i64).await;
 
-        let embed = build_embed_for_summoner(&build_scouting_info_for_player(match_data, riot_account.puuid), &summoner, days_ago);
+        let embed = build_embed_for_summoner(&build_scouting_info_for_player(match_data, riot_account.puuid), &summoner, days_ago).await;
         command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await.expect("TODO: panic message");
     }
 
@@ -94,7 +94,7 @@ pub fn register() -> CreateCommand {
 
 }
 
-fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo>, summoner: &Summoner, time_range_days: u64) -> CreateEmbed {
+async fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo>, summoner: &Summoner, time_range_days: u64) -> CreateEmbed {
     let mut champs: Vec<(String, String, bool)> = vec![];
     let mut total_games: i32 = 0;
 
@@ -126,7 +126,7 @@ fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo>, sum
         .color(Color::DARK_PURPLE)
         .fields(champs.into_iter())
         .footer(CreateEmbedFooter::new("TODO info about pagination"))
-        .thumbnail(get_profile_icon_url(summoner.profile_icon_id));
+        .thumbnail(get_profile_icon_url(summoner.profile_icon_id).await);
 }
 
 fn build_scouting_info_for_player(match_data: Vec<Match>, puuid: String) -> HashMap<Champion, ScoutingInfo> {

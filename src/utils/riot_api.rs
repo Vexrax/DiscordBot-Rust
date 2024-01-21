@@ -9,6 +9,7 @@ use riven::RiotApi;
 
 const REGION: RegionalRoute = RegionalRoute::AMERICAS;
 const PLATFORM: PlatformRoute = PlatformRoute::NA1;
+const DDRAGON_BASE: &str = "http://ddragon.leagueoflegends.com";
 
 pub async fn get_riot_account(game_name: &str, tagline: &str) -> Option<Account> {
     let riot_api = get_riot_api();
@@ -77,9 +78,21 @@ pub async fn get_league_entries(summoner_id: &String) -> Option<Vec<LeagueEntry>
     }
 }
 
-pub fn get_profile_icon_url(profile_icon_id: i32) -> String {
-    let ddragon_base = "http://ddragon.leagueoflegends.com/cdn/13.24.1"; //TODO prob need to get this dynamically
-    let ddragon_base_icon = format!("{}/img/profileicon/", ddragon_base);
+pub async fn get_current_patch() -> String {
+    let source = format!("{}/api/versions.json", DDRAGON_BASE);
+    return match reqwest::get(source).await {
+        Ok(response) => {
+            response.json::<serde_json::Value>().await.unwrap().get(0).unwrap().to_string()
+        }
+        Err(err) => {
+            "14.1.1".to_string()
+        }
+    }
+}
+
+pub async fn get_profile_icon_url(profile_icon_id: i32) -> String {
+    let cdn_base = format!("{}/cdn/{}", DDRAGON_BASE, get_current_patch().await);
+    let ddragon_base_icon = format!("{}/img/profileicon/", cdn_base);
     return format!("{}{}.png", ddragon_base_icon, profile_icon_id)
 }
 
