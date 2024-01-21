@@ -4,6 +4,8 @@ WORKDIR /usr/src/DiscordBot
 
 COPY . .
 
+RUN cargo build --release
+
 FROM gcr.io/distroless/cc-debian10
 
 COPY --from=build /usr/src/DiscordBot/target/release/discord_bot_rust /usr/local/bin/discord_bot_rust
