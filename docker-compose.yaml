@@ -1,6 +1,11 @@
 version: '3'
 services:
-  web:
+  app:
     build: .
+    env_file:
+      - .env
     environment:
-      - DEBUG="1"
+      DISCORD: ${DISCORD}
+      GUILD_ID: ${GUILD_ID}
+      MONGOPASSWORD: ${MONGOPASSWORD}
+      RIOT: ${RIOT}
