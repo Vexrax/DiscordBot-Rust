@@ -132,6 +132,8 @@ async fn main() {
         .await
         .expect("Error creating client");
 
+    // TODO
+    // Setup a webhook to listen to when boosted streamers go live
 
     // Finally, start a single shard, and start listening to events.
     //

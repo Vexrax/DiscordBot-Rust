@@ -2,7 +2,7 @@ use std::cmp;
 use std::collections::HashMap;
 use serenity::all::{Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbed, CreateEmbedFooter, CreateMessage, ResolvedOption, ResolvedValue};
 use crate::commands::business::league_of_legends::{get_recent_match_data, get_riot_id_from_string};
-use crate::utils::discord_message::respond_to_interaction;
+use crate::utils::discord_message::{respond_to_interaction, say_message_in_channel};
 use crate::utils::riot_api::{get_profile_icon_url, get_riot_account, get_summoner};
 use std::time::{SystemTime, Duration};
 use riven::consts::{Champion};
@@ -26,7 +26,6 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     let mut failed_riot_ids: Vec<String> = vec![];
     respond_to_interaction(ctx, command, &format!("Building a recent scouting report for {:?}", riot_ids_inputs).to_string()).await;
     for riot_id_input in riot_ids_inputs {
-        // TODO there has to be a better way to do this input sanitization right?
         let riot_id;
         match get_riot_id_from_string(&riot_id_input) {
             Some(riot_id_data) => riot_id = riot_id_data,
@@ -64,7 +63,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     }
 
     if failed_riot_ids.len() > 0 {
-        command.channel_id.say(&ctx.http, &format!("The following summoners failed {:?}", failed_riot_ids).to_string()).await.expect("TODO: panic message");
+        say_message_in_channel(command.channel_id, &ctx.http, &format!("The following summoners failed {:?}", failed_riot_ids).to_string()).await;
     }
 }
 
