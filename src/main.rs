@@ -134,6 +134,7 @@ async fn main() {
 
     // TODO
     // Setup a webhook to listen to when boosted streamers go live
+    // https://dev.twitch.tv/docs/eventsub/handling-websocket-events/
 
     // Finally, start a single shard, and start listening to events.
     //
