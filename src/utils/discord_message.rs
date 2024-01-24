@@ -1,5 +1,5 @@
 use serenity::{prelude::*, all::CommandInteraction, builder::{CreateInteractionResponseMessage, CreateInteractionResponse}};
-use serenity::all::{ChannelId, CreateEmbed, CreateMessage, Http};
+use serenity::all::{ChannelId, CreateEmbed, Http};
 
 pub async fn respond_to_interaction(ctx: &Context, command: &CommandInteraction, message_to_send: &String)  {
     let data = CreateInteractionResponseMessage::new().content(message_to_send);
