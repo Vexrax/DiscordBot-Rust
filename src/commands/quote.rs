@@ -65,7 +65,7 @@ async fn send_quote_in_channel(ctx: &Context, channel_id: &ChannelId, quotes: Ve
 
     match optional_quote {
         None => {
-            let embed = CreateEmbed::new().title("ERROR").description(&format!("Couldnt find a quote!"));
+            let embed = CreateEmbed::new().title("ERROR").description(&"Couldnt find a quote!".to_string());
             let _msg = channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
         }
         Some(quote) => {

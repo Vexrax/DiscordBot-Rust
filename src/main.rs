@@ -1,5 +1,6 @@
 mod commands;
 mod utils;
+mod sockets;
 
 use std::env;
 use std::time::Duration;
@@ -11,6 +12,7 @@ use serenity::prelude::*;
 
 use serenity::model::application::{Interaction};
 use tokio::{task, time}; // 1.3.0
+
 struct Handler;
 
 #[async_trait]
@@ -57,6 +59,13 @@ impl EventHandler for Handler {
                 commands::reminders::check_for_reminders(&ctx).await;
             }
         });
+
+        // TODO
+        // Setup a webhook to listen to when boosted streamers go live
+        // https://dev.twitch.tv/docs/eventsub/handling-websocket-events/
+        // let join = task::spawn(async {
+        //     twitch::connect_to_socket();
+        // });
     }
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
@@ -132,12 +141,7 @@ async fn main() {
         .await
         .expect("Error creating client");
 
-    // TODO
-    // Setup a webhook to listen to when boosted streamers go live
-    // https://dev.twitch.tv/docs/eventsub/handling-websocket-events/
-
     // Finally, start a single shard, and start listening to events.
-    //
     // Shards will automatically attempt to reconnect, and will perform
     // exponential backoff until it reconnects.
     if let Err(why) = client.start().await {
