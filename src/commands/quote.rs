@@ -52,7 +52,7 @@ async fn get_random_quote(ctx: &Context, command: &CommandInteraction) {
         Ok(quote) => all_quotes = quote,
         Err(err) => {
             all_quotes = vec![];
-            eprintln!("Error occured while getting qute {}", err)
+            eprintln!("Error occurred while getting quote {}", err)
         }
     }
 

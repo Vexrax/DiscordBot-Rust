@@ -4,7 +4,7 @@ use futures::stream::TryStreamExt;
 use serde::{Deserialize, Serialize};
 use mongodb::{bson::doc};
 
-use serenity::all::{CommandInteraction};
+use serenity::all::{Color, CommandInteraction};
 use serenity::builder::{CreateCommand, CreateEmbed, CreateMessage};
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
@@ -18,6 +18,7 @@ struct CopyPasta {
     description: String,
 }
 
+const COPYPASTA_DB_NAME: &str = "CopyPasta";
 pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     respond_to_interaction(&ctx, &command, &"Sending Pastas".to_string()).await;
 
@@ -29,7 +30,15 @@ pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &Comma
     }
 
     for copypasta in all_copy_pastas {
-        let embed = CreateEmbed::new().title(copypasta.title).description(copypasta.description);
+
+        let escaped_copypasta_description = copypasta.description
+            .replace("\\n", "\n")
+            .replace("\\r", "\r");
+
+        let embed = CreateEmbed::new()
+            .color(Color::DARK_RED)
+            .title(copypasta.title)
+            .description(escaped_copypasta_description);
         let _msg = command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
     };
 }
@@ -41,7 +50,7 @@ pub fn register() -> CreateCommand {
 async fn get_copy_pastas() -> mongodb::error::Result<Vec<CopyPasta>> {
     let database = get_mongo_client().await?;
 
-    let typed_collection = database.collection::<CopyPasta>("CopyPasta");
+    let typed_collection = database.collection::<CopyPasta>(COPYPASTA_DB_NAME);
 
     let cursor = typed_collection.find(None, None).await?;
 

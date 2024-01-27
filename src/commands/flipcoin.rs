@@ -13,9 +13,7 @@ pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &Comma
         1 => respond_to_interaction(ctx, command, &"The coin landed on heads".to_string().to_string()).await,
         2 => respond_to_interaction(ctx, command, &"The coin landed on tails".to_string().to_string()).await,
         _ => {}
-    }
-
-    ;
+    };
 }
 
 pub fn register() -> CreateCommand {
