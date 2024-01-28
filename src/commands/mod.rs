@@ -12,3 +12,4 @@ pub mod reminders;
 pub mod messageleaderboard;
 pub mod scouting;
 mod business;
+pub(crate) mod createprivatevoicechannel;
