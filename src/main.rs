@@ -58,6 +58,7 @@ impl EventHandler for Handler {
             loop {
                 interval.tick().await;
                 commands::reminders::check_for_reminders(&ctx).await;
+                commands::createprivatevoicechannel::cleanup_unused_channels(&ctx, guild_id).await;
             }
         });
 
