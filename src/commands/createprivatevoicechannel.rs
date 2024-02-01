@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
-use serenity::all::{CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, GuildId, PermissionOverwrite, PermissionOverwriteType, Permissions, ResolvedOption, ResolvedValue, Role, RoleId, User};
+use serenity::all::{Channel, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, GuildId, PermissionOverwrite, PermissionOverwriteType, Permissions, ResolvedOption, ResolvedValue, Role, RoleId, User};
+use serenity::all::Change::ChannelId;
+use serenity::all::ChannelType::Voice;
 use crate::utils::discord_message::respond_to_interaction;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -12,6 +14,7 @@ struct ChannelParameters {
 }
 
 const CUSTOM_PRIVATE_VC_SNOWFLAKE_ID: u64 = 1201272633572995163;
+const CHANNEL_SUFFIX: &str = "'s private channel";
 
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     let mut users: Vec<User> = vec![];
@@ -25,7 +28,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
         }
     });
 
-    let channel_name =  format!("{}'s private channel", command.user.name);
+    let channel_name =  format!("{}{}", command.user.name, CHANNEL_SUFFIX,);
     let guild_id = command.guild_id.expect("Expected GuildId");
     let private_channel_section_snowflake_id = CUSTOM_PRIVATE_VC_SNOWFLAKE_ID;
 
@@ -65,34 +68,26 @@ pub fn register() -> CreateCommand {
 }
 
 pub async  fn cleanup_unused_channels(ctx: &Context, guild_id: GuildId) {
-    // Check for channels that are empty
-    // Make sure theyre vc
-    // clean them up
-    // TODO
     let channels;
     match ctx.http.get_channels(guild_id).await {
         Ok(guild_channels) => {
             channels = guild_channels.clone();
         }
         Err(_) => {
+            // todo some logging
             return;
         }
     }
-    //
-    // for channel in channels {
-    //     let parent_category;
-    //     match Channel::Guild(channel.clone()).category() {
-    //         None => {
-    //             continue;
-    //         }
-    //         Some(channel) => parent_category = channel,
-    //     }
-    //
-    //     if parent_category.id != ChannelId::from(CUSTOM_PRIVATE_VC_SNOWFLAKE_ID) {
-    //         continue;
-    //     }
-    //     println!("Would have deleted {}", channel.name);
-    // }
+
+    channels.iter()
+        .filter(|channel| {
+            // todo check if anyone is connected
+            return channel.kind == Voice // && channel.name.contains(CHANNEL_SUFFIX)
+        })
+        .for_each(|channel| {
+            // todo actually delete the channel
+            println!("Would have deleted {}", channel.name);
+        });
 }
 
 fn build_permissions(users: Vec<User>, roles: Vec<Role>) -> Vec<PermissionOverwrite> {
