@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use serenity::all::{Channel, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, GuildId, PermissionOverwrite, PermissionOverwriteType, Permissions, ResolvedOption, ResolvedValue, Role, RoleId, User};
-use serenity::all::Change::ChannelId;
 use serenity::all::ChannelType::Voice;
 use crate::utils::discord_message::respond_to_interaction;
 
@@ -43,13 +42,8 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     let audit_log_message = format!("Creating a private channel for {} via Skynet", command.user.name);
     let channel = ctx.http.create_channel(guild_id, &channel_params, Some(&*audit_log_message)).await;
     match channel {
-        Ok(mut created_channel) => {
-            // TODO lets store the channels we create in mongo and periodically clean them up
-            respond_to_interaction(&ctx, &command, &audit_log_message).await;
-        }
-        Err(err) => {
-            respond_to_interaction(&ctx, &command, &"Something went wrong when creating channel!".to_string()).await;
-        }
+        Ok(created_channel) =>  respond_to_interaction(&ctx, &command, &audit_log_message).await,
+        Err(err) =>  respond_to_interaction(&ctx, &command, &format!("Something went wrong when creating channel: {}", err).to_string()).await,
     }
 
 }
