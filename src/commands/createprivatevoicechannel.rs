@@ -73,15 +73,24 @@ pub async  fn cleanup_unused_channels(ctx: &Context, guild_id: GuildId) {
         }
     }
 
-    channels.iter()
+    let channels_to_delete = channels.iter()
         .filter(|channel| {
-            // todo check if anyone is connected
-            return channel.kind == Voice // && channel.name.contains(CHANNEL_SUFFIX)
+            return channel.kind == Voice && channel.name.contains(CHANNEL_SUFFIX);
         })
-        .for_each(|channel| {
-            // todo actually delete the channel
-            println!("Would have deleted {}", channel.name);
+        .filter(|channel| {
+            return match channel.members(&ctx.cache) {
+                Ok(members) => members.len() < 1,
+                Err(err) => false
+            }
         });
+
+    // I cant chain a foreach here because it needs to be async and rust doesnt support async in closures in the stable version yet.
+    for voice_channel_to_delete in channels_to_delete {
+        match voice_channel_to_delete.delete(&ctx.http).await {
+            Ok(deleted_channel) => println!("Deleted channel with name {}", voice_channel_to_delete.name),
+            Err(err) => println!("There was a error while trying to delete a channel with name {}, err {}", voice_channel_to_delete.name, err)
+        }
+    }
 }
 
 fn build_permissions(users: Vec<User>, roles: Vec<Role>) -> Vec<PermissionOverwrite> {
