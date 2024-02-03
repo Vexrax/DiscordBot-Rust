@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use serenity::all::{Channel, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, GuildId, PermissionOverwrite, PermissionOverwriteType, Permissions, ResolvedOption, ResolvedValue, Role, RoleId, User};
+use serenity::all::{CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, GuildId, PermissionOverwrite, PermissionOverwriteType, Permissions, ResolvedOption, ResolvedValue, Role, RoleId, User};
 use serenity::all::ChannelType::Voice;
 use crate::utils::discord_message::respond_to_interaction;
 
@@ -42,7 +42,10 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     let audit_log_message = format!("Creating a private channel for {} via Skynet", command.user.name);
     let channel = ctx.http.create_channel(guild_id, &channel_params, Some(&*audit_log_message)).await;
     match channel {
-        Ok(created_channel) =>  respond_to_interaction(&ctx, &command, &audit_log_message).await,
+        Ok(created_channel) =>  {
+            println!("Created a channel with name {} and id {}", created_channel.name, created_channel.id);
+            respond_to_interaction(&ctx, &command, &audit_log_message).await
+        },
         Err(err) =>  respond_to_interaction(&ctx, &command, &format!("Something went wrong when creating channel: {}", err).to_string()).await,
     }
 
@@ -68,7 +71,7 @@ pub async  fn cleanup_unused_channels(ctx: &Context, guild_id: GuildId) {
             channels = guild_channels.clone();
         }
         Err(_) => {
-            // todo some logging
+            eprintln!("Error occurred while trying to fetch channels to cleanup");
             return;
         }
     }
@@ -80,14 +83,14 @@ pub async  fn cleanup_unused_channels(ctx: &Context, guild_id: GuildId) {
         .filter(|channel| {
             return match channel.members(&ctx.cache) {
                 Ok(members) => members.len() < 1,
-                Err(err) => false
+                Err(_) => false
             }
         });
 
     // I cant chain a foreach here because it needs to be async and rust doesnt support async in closures in the stable version yet.
     for voice_channel_to_delete in channels_to_delete {
         match voice_channel_to_delete.delete(&ctx.http).await {
-            Ok(deleted_channel) => println!("Deleted channel with name {}", voice_channel_to_delete.name),
+            Ok(deleted_channel) => println!("Deleted channel with name {}", deleted_channel.name),
             Err(err) => println!("There was a error while trying to delete a channel with name {}, err {}", voice_channel_to_delete.name, err)
         }
     }

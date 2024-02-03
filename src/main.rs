@@ -11,7 +11,7 @@ use serenity::model::id::GuildId;
 use serenity::prelude::*;
 
 use serenity::model::application::{Interaction};
-use tokio::{task, time}; // 1.3.0
+use tokio::{task, time};
 
 struct Handler;
 
@@ -142,7 +142,7 @@ async fn main() {
 
     let intents = GatewayIntents::MESSAGE_CONTENT | GatewayIntents::non_privileged();
     // Build our client.
-    let mut client = serenity::Client::builder(token, intents)
+    let mut client = Client::builder(token, intents)
         .event_handler(Handler)
         .await
         .expect("Error creating client");
