@@ -64,7 +64,7 @@ pub fn register() -> CreateCommand {
             .required(false))
 }
 
-pub async  fn cleanup_unused_channels(ctx: &Context, guild_id: GuildId) {
+pub async fn cleanup_unused_channels(ctx: &Context, guild_id: GuildId) {
     let channels;
     match ctx.http.get_channels(guild_id).await {
         Ok(guild_channels) => {

@@ -17,21 +17,21 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     if let Some(ResolvedOption { value: ResolvedValue::String(quote_option), .. }) = options.get(0) {
         quote = quote_option.to_string();
     } else {
-        respond_to_interaction(&ctx, &command, &"Expected quote to be specified".to_string().to_string()).await;
+        respond_to_interaction(&ctx, &command, &"Expected quote to be specified".to_string()).await;
         return;
     }
 
     if let Some(ResolvedOption { value: ResolvedValue::String(author_option), .. }) = options.get(1) {
         author = author_option.to_string();
     } else {
-        respond_to_interaction(&ctx, &command, &"Expected author to be specified".to_string().to_string()).await;
+        respond_to_interaction(&ctx, &command, &"Expected author to be specified".to_string()).await;
         return;
     }
 
     if let Some(ResolvedOption { value: ResolvedValue::String(year_option), .. }) = options.get(2) {
         year = year_option.to_string();
     } else {
-        respond_to_interaction(&ctx, &command, &"Expected year to be specified".to_string().to_string()).await;
+        respond_to_interaction(&ctx, &command, &"Expected year to be specified".to_string()).await;
         return;
     }
 

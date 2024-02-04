@@ -108,7 +108,7 @@ pub fn get_riot_id_from_string(riot_id: &String) -> Option<RiotId> {
         None => return None
     }
 
-    Some(crate::commands::business::league_of_legends::RiotId {
+    Some(RiotId {
         name: riot_account_name.to_string(),
         tagline: riot_account_tagline.to_string()
     })

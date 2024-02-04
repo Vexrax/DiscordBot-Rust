@@ -85,6 +85,7 @@ pub async fn get_current_patch() -> String {
             response.json::<serde_json::Value>().await.unwrap().get(0).unwrap().to_string()
         }
         Err(err) => {
+            eprintln!("Something went wrong while trying to find current patch: {}", err);
             "14.1.1".to_string()
         }
     }

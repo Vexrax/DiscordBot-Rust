@@ -36,7 +36,7 @@ async fn get_quote_from(name: &String, ctx: &Context, command: &CommandInteracti
         Ok(quote) => all_quotes = quote,
         Err(err) => {
             all_quotes = vec![];
-            eprintln!("Error occured while getting quote from, error: {}", err)
+            eprintln!("Error occurred while getting quote from, error: {}", err)
         }
     }
 

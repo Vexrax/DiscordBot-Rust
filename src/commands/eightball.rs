@@ -32,7 +32,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
 
         respond_to_interaction_with_embed(ctx, command, &"".to_string(), embed).await;
     } else {
-        respond_to_interaction(ctx, command, &format!("Please ask a question").to_string()).await;
+        respond_to_interaction(ctx, command, &"Please ask a question".to_string().to_string()).await;
     }
 }
 
