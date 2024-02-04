@@ -1,4 +1,5 @@
 use mongodb::Collection;
+use mongodb::results::InsertOneResult;
 
 use serenity::all::{CommandInteraction, ResolvedValue, CommandOptionType};
 use serenity::builder::{CreateCommand, CreateCommandOption};
@@ -56,7 +57,9 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     let database_result = get_mongo_client().await;
 
     match database_result {
-        Ok(db) => add_quote_to_collection(db.collection::<Quote>(QUOTE_DB_NAME), quote_to_add).await,
+        Ok(db) =>  {
+            add_quote_to_collection(db.collection::<Quote>(QUOTE_DB_NAME), quote_to_add).await
+        },
         Err(err) => {
             eprintln!("Error: something went wrong when trying to add a quote to the DB: {}", err);
         }
@@ -64,7 +67,14 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
 }
 
 async fn add_quote_to_collection(collection: Collection<Quote>, quote_to_add: Quote) {
-    collection.insert_one(quote_to_add, None).await.ok();
+    match collection.insert_one(quote_to_add, None).await.ok() {
+        Some(result) => {
+            println!("Added quote [{}] to the DB: id: {}", quote_to_add.quote, result.inserted_id)
+        }
+        None => {
+            eprintln!("Something went wrong trying to add the quote []")
+        }
+    }
 }
 
 pub fn register() -> CreateCommand {
