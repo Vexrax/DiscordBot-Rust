@@ -60,21 +60,21 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     if let Some(ResolvedOption { value: ResolvedValue::String(reminder_option), .. }) = options.get(0) {
         reminder = reminder_option.to_string();
     } else {
-        respond_to_interaction(&ctx, &command, &format!("Expected reminder to be specified").to_string()).await;
+        respond_to_interaction(&ctx, &command, &"Expected reminder to be specified".to_string().to_string()).await;
         return;
     }
 
     if let Some(ResolvedOption { value: ResolvedValue::Integer(amount_option), .. }) = options.get(1) {
         amount = *amount_option;
     } else {
-        respond_to_interaction(&ctx, &command, &format!("Expected amount to be specified").to_string()).await;
+        respond_to_interaction(&ctx, &command, &"Expected amount to be specified".to_string().to_string()).await;
         return;
     }
 
     if let Some(ResolvedOption { value: ResolvedValue::String(unit_option), .. }) = options.get(2) {
         unit = TimeUnit::from_str(&unit_option).unwrap();
     } else {
-        respond_to_interaction(&ctx, &command, &format!("Expected unit to be specified").to_string()).await;
+        respond_to_interaction(&ctx, &command, &"Expected unit to be specified".to_string().to_string()).await;
         return;
     }
 
@@ -101,12 +101,12 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
         Some(_result) => {
             respond_to_interaction_with_embed(&ctx,
                                               &command,
-                                              &format!("I am creating the following reminder:"),
+                                              &"I am creating the following reminder:".to_string(),
                                               get_reminder_creation_embed(&command.user, &reminder, time_in_future_seconds as u64))
                 .await;
         }
         None => {
-            respond_to_interaction(&ctx, &command, &format!("Something went wrong when trying to save the reminder!"))
+            respond_to_interaction(&ctx, &command, &"Something went wrong when trying to save the reminder!".to_string())
                 .await;
         }
     }
@@ -136,27 +136,36 @@ pub fn register() -> CreateCommand {
 
 pub async fn check_for_reminders(ctx: &Context) {
 
-    let all_reminders: Vec<Reminder>;
-
-    match get_reminders_from_collection(doc! {  }).await {
-        Ok(quote) => all_reminders = quote,
-        Err(err) => {
-            all_reminders = vec![];
-            eprintln!("Error occurred while getting reminders {}", err)
-        }
-    }
+    let all_reminders: Vec<Reminder> = get_reminders_from_collection(doc! {  }).await.unwrap_or_else(|err| {
+        eprintln!("Error occurred while getting reminders {}", err);
+        vec![]
+    });
 
     for reminder in all_reminders {
         if!(SystemTime::now() > SystemTime::UNIX_EPOCH + Duration::from_secs(reminder.time)) {
             continue;
         }
 
-        let channel: Channel = ctx.http.get_channel(ChannelId::from(reminder.channel_id))
-            .await
-            .expect("Expected to be able to get a channel");
-        let user: User = ctx.http.get_user(UserId::from(reminder.user_id))
-            .await
-            .expect("Expected the user to exist");
+        let channel;
+        match  ctx.http.get_channel(ChannelId::from(reminder.channel_id)).await {
+            Ok(channel_to_remind_in) => channel = channel_to_remind_in,
+            Err(err) => {
+                eprintln!("Could not find the channel {}, err: {}", reminder.channel_id, err);
+                delete_reminder_from_collection(reminder).await;
+                continue;
+            }
+        }
+
+        let user;
+        match ctx.http.get_user(UserId::from(reminder.user_id)).await {
+            Ok(user_to_remind) => user = user_to_remind,
+            Err(err) => {
+                eprintln!("Could not find the user {}, err: {}", reminder.user_id, err);
+                delete_reminder_from_collection(reminder).await;
+                continue;
+            }
+        }
+
         let embed: CreateEmbed = CreateEmbed::new()
             .title(&format!("Reminder for {}", user.name))
             .description(&format!("{}", reminder.reminder))
@@ -178,36 +187,33 @@ async fn get_reminders_from_collection(filter: Document) -> mongodb::error::Resu
 
 async fn add_reminder_to_collection(reminder:  Reminder) -> Option<InsertOneResult> {
     let database_result = get_mongo_client().await;
-    let mut result = None;
-    match database_result {
+
+    return match database_result {
         Ok(db) => {
             let collection = db.collection::<Reminder>(REMINDER_DB_NAME);
-            result = collection.insert_one(reminder, None).await.ok();
+            collection.insert_one(reminder, None).await.ok()
         },
         Err(err) => {
             eprintln!("Error: something went wrong when trying to add a reminder to the DB: {}", err);
+            None
         }
-    }
-
-    return result;
+    };
 }
 
 async fn delete_reminder_from_collection(reminder: Reminder) -> Option<DeleteResult> {
     let database = get_mongo_client().await.expect("Expected to be able to find DB");
     let typed_collection = database.collection::<Reminder>(REMINDER_DB_NAME);
 
-    let mut result = None;
-    match typed_collection.delete_one(doc! { "reminder" : reminder.reminder, "user_id": Bson::Int64(reminder.user_id as i64)}, None).await {
+    return match typed_collection.delete_one(doc! { "reminder" : reminder.reminder, "user_id": Bson::Int64(reminder.user_id as i64)}, None).await {
         Ok(delete_result) => {
             println!("Deleted {} from the {} db", delete_result.deleted_count, typed_collection.name());
-            result = Some(delete_result);
+            Some(delete_result)
         },
         Err(err) => {
-            eprintln!("Error occurred when deleting reminder: {}", err)
+            eprintln!("Error occurred when deleting reminder: {}", err);
+            None
         }
     }
-
-    return result;
 }
 
 fn get_reminder_creation_embed(user: &User, reminder: &Reminder, time_in_future_seconds: u64) -> CreateEmbed {
