@@ -146,31 +146,29 @@ pub async fn check_for_reminders(ctx: &Context) {
             continue;
         }
 
-        let channel;
-        match  ctx.http.get_channel(ChannelId::from(reminder.channel_id)).await {
-            Ok(channel_to_remind_in) => channel = channel_to_remind_in,
+        let channel = match ctx.http.get_channel(ChannelId::from(reminder.channel_id)).await {
+            Ok(channel) => channel,
             Err(err) => {
                 eprintln!("Could not find the channel {}, err: {}", reminder.channel_id, err);
                 delete_reminder_from_collection(reminder).await;
                 continue;
             }
-        }
+        };
 
-        let user;
-        match ctx.http.get_user(UserId::from(reminder.user_id)).await {
-            Ok(user_to_remind) => user = user_to_remind,
+        let user= match ctx.http.get_user(UserId::from(reminder.user_id)).await {
+            Ok(user) => user,
             Err(err) => {
                 eprintln!("Could not find the user {}, err: {}", reminder.user_id, err);
                 delete_reminder_from_collection(reminder).await;
                 continue;
             }
-        }
+        };
 
         let embed: CreateEmbed = CreateEmbed::new()
             .title(&format!("Reminder for {}", user.name))
             .description(&format!("{}", reminder.reminder))
             .color(Color::DARK_TEAL)
-            .thumbnail(user.avatar_url().expect("Expected URL"));
+            .thumbnail(user.avatar_url().unwrap_or_else(|| "".to_string()));
 
         let _ = channel.id().send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
 
@@ -229,7 +227,7 @@ fn get_reminder_creation_embed(user: &User, reminder: &Reminder, time_in_future_
         .title(&format!("Reminder for {} on {} {}, {} EST", user.name, month.name(), day, year))
         .description(&format!("{}", reminder.reminder))
         .color(Color::DARK_BLUE)
-        .thumbnail(user.avatar_url().expect("Expected URL"));
+        .thumbnail(user.avatar_url().unwrap_or_else(|| "".to_string()));
 }
 
 fn get_second_conversion_factor(unit_from_user: TimeUnit) -> i64 {

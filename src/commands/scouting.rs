@@ -26,32 +26,29 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     let mut failed_riot_ids: Vec<String> = vec![];
     respond_to_interaction(ctx, command, &format!("Building a recent scouting report for {:?}", riot_ids_inputs).to_string()).await;
     for riot_id_input in riot_ids_inputs {
-        let riot_id;
-        match get_riot_id_from_string(&riot_id_input) {
-            Some(riot_id_data) => riot_id = riot_id_data,
+        let riot_id = match get_riot_id_from_string(&riot_id_input) {
+            Some(riot_id_data) => riot_id_data,
             None => {
                 failed_riot_ids.push(riot_id_input);
                 continue;
             }
-        }
+        };
 
-        let riot_account;
-        match get_riot_account(riot_id.name.as_str(), riot_id.tagline.as_str()).await {
-            Some(riot_account_data) => riot_account = riot_account_data,
+        let riot_account = match get_riot_account(riot_id.name.as_str(), riot_id.tagline.as_str()).await {
+            Some(riot_account_data) => riot_account_data,
             None => {
                 failed_riot_ids.push(riot_id_input);
                 continue;
             },
-        }
+        };
 
-        let summoner;
-        match get_summoner(&riot_account).await {
-            Some(summoner_data) => summoner = summoner_data,
+        let summoner = match get_summoner(&riot_account).await {
+            Some(summoner_data) => summoner_data,
             None => {
                 failed_riot_ids.push(riot_id_input);
                 continue;
             },
-        }
+        };
 
         let days_ago: u64 = 30;
         let start_time_epoch_seconds = (SystemTime::now() - Duration::from_secs(days_ago * 24 * 60 * 60)).duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
@@ -59,7 +56,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
         let match_data = get_recent_match_data(summoner.clone(), start_time_epoch_seconds as i64).await;
 
         let embed = build_embed_for_summoner(&build_scouting_info_for_player(match_data, riot_account.puuid), &summoner, days_ago).await;
-        command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await.expect("TODO: panic message");
+        let _ = command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
     }
 
     if failed_riot_ids.len() > 0 {
