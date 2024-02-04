@@ -1,4 +1,4 @@
-use mongodb::Collection;
+use mongodb::{Collection, Database};
 use mongodb::results::InsertOneResult;
 
 use serenity::all::{CommandInteraction, ResolvedValue, CommandOptionType};
@@ -11,6 +11,7 @@ use crate::utils::discord_message::respond_to_interaction;
 use crate::utils::mongo::get_mongo_client;
 use crate::utils::string_utils::capitalize;
 
+const VEXRAX_USER_ID: i64 = 188313190214533120;
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     let quote: String;
     let author: String;
@@ -38,8 +39,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
 
 
     if let Some(member) = &command.member {
-        // Vexrax userId
-        if member.user.id != 188313190214533120 {
+        if member.user.id != VEXRAX_USER_ID {
             respond_to_interaction(&ctx, &command, &"No permission to run this command".to_string()).await;
             return;
         }
@@ -58,7 +58,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
 
     match database_result {
         Ok(db) =>  {
-            add_quote_to_collection(db.collection::<Quote>(QUOTE_DB_NAME), quote_to_add).await
+            add_quote_to_collection(db, quote_to_add).await
         },
         Err(err) => {
             eprintln!("Error: something went wrong when trying to add a quote to the DB: {}", err);
@@ -66,8 +66,8 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     }
 }
 
-async fn add_quote_to_collection(collection: Collection<Quote>, quote_to_add: Quote) {
-    match collection.insert_one(quote_to_add, None).await.ok() {
+async fn add_quote_to_collection(db: Database, quote_to_add: Quote) {
+    match db.collection::<Quote>(QUOTE_DB_NAME).insert_one(quote_to_add, None).await.ok() {
         Some(result) => {
             println!("Added quote [{}] to the DB: id: {}", quote_to_add.quote, result.inserted_id)
         }

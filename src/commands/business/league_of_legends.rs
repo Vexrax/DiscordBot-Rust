@@ -54,11 +54,10 @@ pub async fn get_recent_match_data(summoner: Summoner, start_time_epoch_seconds:
 }
 
 pub async fn get_rank_of_player(ecrypted_summoner_id: String, queue_type: QueueType) -> Option<LeagueEntry> {
-    let league_entries;
-    match get_league_entries(&ecrypted_summoner_id).await {
-        Some(league_entries_from_api) => league_entries = league_entries_from_api,
+    let league_entries= match get_league_entries(&ecrypted_summoner_id).await {
+        Some(league_entries_from_api) =>  league_entries_from_api,
         None => return None
-    }
+    };
 
     for league in league_entries.iter() {
         if league.queue_type == queue_type {
@@ -70,11 +69,10 @@ pub async fn get_rank_of_player(ecrypted_summoner_id: String, queue_type: QueueT
 }
 
 pub async fn get_summoner_by_riot_id(riot_id: RiotId) -> Option<Summoner> {
-    let riot_account;
-    match get_riot_account(&riot_id.name, &riot_id.tagline).await {
-        Some(riot_acc) => riot_account = riot_acc,
+    let riot_account= match get_riot_account(&riot_id.name, &riot_id.tagline).await {
+        Some(riot_account) =>  riot_account,
         None => return None
-    }
+    };
 
     return get_summoner(&riot_account).await;
 }
@@ -96,17 +94,15 @@ pub async fn get_current_match_by_riot_summoner(riot_summoner: &Summoner) -> Opt
 
 pub fn get_riot_id_from_string(riot_id: &String) -> Option<RiotId> {
     let mut split_summoner = riot_id.split("#");
-    let riot_account_name;
-    match split_summoner.next() {
-        Some(name) => riot_account_name = name,
+    let riot_account_name= match split_summoner.next() {
+        Some(riot_account_name ) => riot_account_name,
         None => return None
-    }
+    };
 
-    let riot_account_tagline;
-    match split_summoner.next() {
-        Some(tagline) => riot_account_tagline = tagline,
+    let riot_account_tagline= match split_summoner.next() {
+        Some(riot_account_tagline) => riot_account_tagline,
         None => return None
-    }
+    };
 
     Some(RiotId {
         name: riot_account_name.to_string(),
