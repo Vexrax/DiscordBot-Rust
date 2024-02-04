@@ -52,7 +52,7 @@ pub fn build_embed(message_counts: HashMap<User, u32>) -> CreateEmbed {
     }
 
     return  CreateEmbed::new()
-        .title(&format!("Message Leaderboard"))
+        .title(&"Message Leaderboard".to_string())
         .description(&format!("Top {} yappers in boosted", AMOUNT_OF_LEADERBOARD_POSITIONS_TO_DISPLAY))
         .color(Color::TEAL)
         .fields(fields.into_iter())

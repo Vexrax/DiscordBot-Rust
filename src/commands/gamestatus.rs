@@ -23,7 +23,7 @@ struct MatchPlayer {
 
 const PLAYERS_IDS: [&str; 5] = ["Vexrax#FAKER", "Zafa#NA1", "Earleking#NA1", "rgrou2#NA1", "grant#erino"];
 pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
-    respond_to_interaction(&ctx, &command, &format!("Checking to see if anyone in boosted is in game...").to_string()).await;
+    respond_to_interaction(&ctx, &command, &"Checking to see if anyone in boosted is in game...".to_string().to_string()).await;
     let mut players: Vec<RiotId> = vec![];
 
     for player_id_input in PLAYERS_IDS {

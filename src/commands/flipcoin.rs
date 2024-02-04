@@ -10,8 +10,8 @@ pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &Comma
     let num: i32 = rand::thread_rng().gen_range(0..2);
 
     match num {
-        1 => respond_to_interaction(ctx, command, &"The coin landed on heads".to_string().to_string()).await,
-        2 => respond_to_interaction(ctx, command, &"The coin landed on tails".to_string().to_string()).await,
+        1 => respond_to_interaction(ctx, command, &"The coin landed on heads".to_string()).await,
+        2 => respond_to_interaction(ctx, command, &"The coin landed on tails".to_string()).await,
         _ => {}
     };
 }
