@@ -1,4 +1,4 @@
-use serenity::all::{Channel, ChannelId, CommandInteraction, CommandOptionType, CreateEmbed, CreateMessage, GuildId, ResolvedValue, User, UserId};
+use serenity::all::{ChannelId, CommandInteraction, CommandOptionType, CreateEmbed, CreateMessage, GuildId, ResolvedValue, User, UserId};
 use serenity::builder::{CreateCommand, CreateCommandOption};
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
