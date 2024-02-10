@@ -16,7 +16,7 @@ pub async fn get_riot_account(game_name: &str, tagline: &str) -> Option<Account>
     match riot_api.account_v1().get_by_riot_id(REGION, game_name, tagline).await {
         Ok(riot_account_maybe) => return riot_account_maybe,
         Err(err) =>  {
-            eprintln!("Riot api errored: {}", err);
+            log::error!("Riot api errored: {}", err);
             None
         }
     }
@@ -28,7 +28,7 @@ pub async fn get_summoner(riot_account: &Account) -> Option<Summoner> {
     match riot_api.summoner_v4().get_by_puuid(PLATFORM, &riot_account.puuid).await {
         Ok(riot_summoner) => return Some(riot_summoner),
         Err(err) =>  {
-            eprintln!("Riot api errored: {}", err);
+            log::error!("Riot api errored: {}", err);
             None
         }
     }
@@ -39,7 +39,7 @@ pub async fn get_match_by_id(match_id: &str) -> Option<Match> {
     match riot_api.match_v5().get_match(REGION, match_id).await {
         Ok(league_match) => return league_match,
         Err(err) =>  {
-            eprintln!("Riot api errored: {}", err);
+            log::error!("Riot api errored: {}", err);
             None
         }
     }
@@ -50,7 +50,7 @@ pub async fn get_match_ids(puuid: &str, queue: Queue, start_time_epoch_seconds: 
     match riot_api.match_v5().get_match_ids_by_puuid(REGION, puuid, Some(amount_to_search_for), None, Some(queue), Some(start_time_epoch_seconds), Some(start_index), None).await {
         Ok(matches) => Some(matches),
         Err(err) =>  {
-            eprintln!("Riot api errored: {}", err);
+            log::error!("Riot api errored: {}", err);
             None
         }
     }
@@ -61,7 +61,7 @@ pub async fn get_current_match(summoner: &Summoner) -> Option<CurrentGameInfo> {
     match riot_api.spectator_v4().get_current_game_info_by_summoner(PLATFORM, &summoner.id).await {
         Ok(current_match) => return current_match,
         Err(err) =>  {
-            eprintln!("Riot api errored: {}", err);
+            log::error!("Riot api errored: {}", err);
             None
         }
     }
@@ -72,7 +72,7 @@ pub async fn get_league_entries(summoner_id: &String) -> Option<Vec<LeagueEntry>
     match riot_api.league_v4().get_league_entries_for_summoner(PLATFORM, &summoner_id).await {
         Ok(league_entires) => return Some(league_entires),
         Err(err) =>  {
-            eprintln!("Riot api errored: {}", err);
+            log::error!("Riot api errored: {}", err);
             None
         }
     }

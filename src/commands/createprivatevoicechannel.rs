@@ -43,7 +43,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     let channel = ctx.http.create_channel(guild_id, &channel_params, Some(&*audit_log_message)).await;
     match channel {
         Ok(created_channel) =>  {
-            println!("Created a channel with name {} and id {}", created_channel.name, created_channel.id);
+            log::info!("Created a channel with name {} and id {}", created_channel.name, created_channel.id);
             respond_to_interaction(&ctx, &command, &audit_log_message).await
         },
         Err(err) =>  respond_to_interaction(&ctx, &command, &format!("Something went wrong when creating channel: {}", err).to_string()).await,
@@ -71,7 +71,7 @@ pub async fn cleanup_unused_channels(ctx: &Context, guild_id: GuildId) {
             channels = guild_channels.clone();
         }
         Err(_) => {
-            eprintln!("Error occurred while trying to fetch channels to cleanup");
+            log::error!("Error occurred while trying to fetch channels to cleanup");
             return;
         }
     }

@@ -31,7 +31,7 @@ async fn get_quote_from(name: &String, ctx: &Context, command: &CommandInteracti
     respond_to_interaction(&ctx, &command, &format!("getting a quote from {}...", name).to_string()).await;
 
     let all_quotes = get_quotes(doc! { "author": capitalize(name) }).await.unwrap_or_else(|err| {
-        eprintln!("Error occurred while getting quote for {} err: {}", name, err);
+        log::error!("Error occurred while getting quote for {} err: {}", name, err);
         vec![]
     });
 
@@ -42,7 +42,7 @@ async fn get_random_quote(ctx: &Context, command: &CommandInteraction) {
     respond_to_interaction(&ctx, &command, &"Getting a random quote. . .".to_string()).await;
 
     let all_quotes: Vec<Quote> = get_quotes(doc! {  }).await.unwrap_or_else(|err| {
-        eprintln!("Error occurred while getting random quote {}", err);
+        log::error!("Error occurred while getting random quote {}", err);
         vec![]
     });
 

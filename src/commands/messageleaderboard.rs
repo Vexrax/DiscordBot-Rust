@@ -18,7 +18,7 @@ pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &Comma
 
     let mut message_counts: HashMap<User, u32> = HashMap::new();
     for channels in all_channels {
-        println!("Starting Channel: {:?}", channels.0.name(&ctx.http).await);
+        log::info!("Starting Channel: {:?}", channels.0.name(&ctx.http).await);
         merge_maps(&mut message_counts, get_all_messages_in_channel(channels.0, ctx).await);
     }
 

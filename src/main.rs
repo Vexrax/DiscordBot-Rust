@@ -18,7 +18,7 @@ struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, ready: Ready) {
-        println!("{} is connected!", ready.user.name);
+        log::info!("{} is connected!", ready.user.name);
 
         let guild_id = GuildId::new(
             env::var("GUILD_ID")
@@ -137,6 +137,7 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() {
+    simple_logger::init_with_level(log::Level::Warn).unwrap();
     // Configure the client with your Discord bot token in the environment.
     let token = env::var("DISCORD").expect("Expected a token in the environment");
 
@@ -151,6 +152,6 @@ async fn main() {
     // Shards will automatically attempt to reconnect, and will perform
     // exponential backoff until it reconnects.
     if let Err(why) = client.start().await {
-        println!("Client error: {:?}", why);
+        log::error!("Client error: {:?}", why);
     }
 }

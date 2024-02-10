@@ -5,7 +5,7 @@ pub async fn respond_to_interaction(ctx: &Context, command: &CommandInteraction,
     let data = CreateInteractionResponseMessage::new().content(message_to_send);
     let builder = CreateInteractionResponse::Message(data);
     if let Err(why) = command.create_response(&ctx.http, builder).await {
-        eprintln!("Cannot respond to slash command: {why}");
+        log::error!("Cannot respond to slash command: {why}");
     }
 }
 
@@ -14,7 +14,7 @@ pub async fn respond_to_interaction_with_embed(ctx: &Context, command: &CommandI
         .content(message_to_send)
         .embed(embed));
     if let Err(why) = command.create_response(&ctx.http, builder).await {
-        eprintln!("Cannot respond to slash command: {why}");
+        log::error!("Cannot respond to slash command: {why}");
     }
 }
 
@@ -22,7 +22,7 @@ pub async fn say_message_in_channel(channel_id: ChannelId, http: &Http, message:
     match channel_id.say(http, message).await {
         Ok(_) => {}
         Err(err) => {
-            eprintln!("Something went wrong when trying to send message {}, err: {}", message, err);
+            log::error!("Something went wrong when trying to send message {}, err: {}", message, err);
         }
     }
 }

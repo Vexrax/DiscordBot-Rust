@@ -23,7 +23,7 @@ pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &Comma
     respond_to_interaction(&ctx, &command, &"Sending Pastas".to_string()).await;
 
     let all_copy_pastas: Vec<CopyPasta> = get_copy_pastas().await.unwrap_or_else(|err| {
-        eprintln!("Something went wrong while trying to get copypasta: {}", err);
+        log::error!("Something went wrong while trying to get copypasta: {}", err);
         vec![get_error_copypasta(&err)]
     });
 

@@ -192,7 +192,7 @@ async fn add_reminder_to_collection(reminder:  Reminder) -> Option<InsertOneResu
             collection.insert_one(reminder, None).await.ok()
         },
         Err(err) => {
-            eprintln!("Error: something went wrong when trying to add a reminder to the DB: {}", err);
+            log::error!("Error: something went wrong when trying to add a reminder to the DB: {}", err);
             None
         }
     };
@@ -204,11 +204,11 @@ async fn delete_reminder_from_collection(reminder: Reminder) -> Option<DeleteRes
 
     return match typed_collection.delete_one(doc! { "reminder" : reminder.reminder, "user_id": Bson::Int64(reminder.user_id as i64)}, None).await {
         Ok(delete_result) => {
-            println!("Deleted {} from the {} db", delete_result.deleted_count, typed_collection.name());
+            log::info!("Deleted {} from the {} db", delete_result.deleted_count, typed_collection.name());
             Some(delete_result)
         },
         Err(err) => {
-            eprintln!("Error occurred when deleting reminder: {}", err);
+            log::error!("Error occurred when deleting reminder: {}", err);
             None
         }
     }

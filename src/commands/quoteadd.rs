@@ -60,7 +60,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
             add_quote_to_collection(db, quote_to_add).await
         },
         Err(err) => {
-            eprintln!("Error: something went wrong when trying to add a quote to the DB: {}", err);
+            log::error!("Error: something went wrong when trying to add a quote to the DB: {}", err);
         }
     }
 }
@@ -68,10 +68,10 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
 async fn add_quote_to_collection(db: Database, quote_to_add: Quote) {
     match db.collection::<Quote>(QUOTE_DB_NAME).insert_one(quote_to_add.clone(), None).await.ok() {
         Some(result) => {
-            println!("Added quote [{}] to the DB: id: {}", quote_to_add.quote.clone(), result.inserted_id)
+            log::info!("Added quote [{}] to the DB: id: {}", quote_to_add.quote.clone(), result.inserted_id)
         }
         None => {
-            eprintln!("Something went wrong trying to add the quote []")
+            log::error!("Something went wrong trying to add the quote []")
         }
     }
 }
