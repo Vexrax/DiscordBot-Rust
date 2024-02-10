@@ -22,15 +22,10 @@ const COPYPASTA_DB_NAME: &str = "CopyPasta";
 pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     respond_to_interaction(&ctx, &command, &"Sending Pastas".to_string()).await;
 
-    let all_copy_pastas: Vec<CopyPasta>;
-
-    match get_copy_pastas().await {
-        Ok(pasta) => all_copy_pastas = pasta,
-        Err(err) => {
-            eprintln!("Something went wrong while trying to get copypasta: {}", err);
-            all_copy_pastas = vec![get_error_copypasta(&err)]
-        }
-    }
+    let all_copy_pastas: Vec<CopyPasta> = get_copy_pastas().await.unwrap_or_else(|err| {
+        eprintln!("Something went wrong while trying to get copypasta: {}", err);
+        vec![get_error_copypasta(&err)]
+    });
 
     for copypasta in all_copy_pastas {
 

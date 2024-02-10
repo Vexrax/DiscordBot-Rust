@@ -30,15 +30,10 @@ pub fn register() -> CreateCommand {
 async fn get_quote_from(name: &String, ctx: &Context, command: &CommandInteraction) {
     respond_to_interaction(&ctx, &command, &format!("getting a quote from {}...", name).to_string()).await;
 
-    let all_quotes: Vec<Quote>;
-
-    match get_quotes(doc! { "author": capitalize(name) }).await {
-        Ok(quote) => all_quotes = quote,
-        Err(err) => {
-            all_quotes = vec![];
-            eprintln!("Error occurred while getting quote from, error: {}", err)
-        }
-    }
+    let all_quotes = get_quotes(doc! { "author": capitalize(name) }).await.unwrap_or_else(|err| {
+        eprintln!("Error occurred while getting quote for {} err: {}", name, err);
+        vec![]
+    });
 
     send_quote_in_channel(ctx, &command.channel_id, all_quotes).await
 }
@@ -46,15 +41,10 @@ async fn get_quote_from(name: &String, ctx: &Context, command: &CommandInteracti
 async fn get_random_quote(ctx: &Context, command: &CommandInteraction) {
     respond_to_interaction(&ctx, &command, &"Getting a random quote. . .".to_string()).await;
 
-    let all_quotes: Vec<Quote>;
-
-    match get_quotes(doc! {  }).await {
-        Ok(quote) => all_quotes = quote,
-        Err(err) => {
-            all_quotes = vec![];
-            eprintln!("Error occurred while getting quote {}", err)
-        }
-    }
+    let all_quotes: Vec<Quote> = get_quotes(doc! {  }).await.unwrap_or_else(|err| {
+        eprintln!("Error occurred while getting random quote {}", err);
+        vec![]
+    });
 
     send_quote_in_channel(ctx, &command.channel_id, all_quotes).await
 }
