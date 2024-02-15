@@ -77,8 +77,21 @@ async fn build_embed(main_player_riot_summoner: Summoner, match_players: Vec<Mat
     }
 
     while red_queue.size() > 0 || blue_queue.size() > 0 {
-        let red_player = red_queue.remove().expect("Expected playersize to be the same");
-        let blue_player = blue_queue.remove().expect("Expected playersize to be the same");
+        let red_player =  match red_queue.remove() {
+            Ok(player) => player,
+            Err(err) => {
+                log::error!("Red player size was not the same! {}!", err);
+                return CreateEmbed::new().title("Error Embed");
+            }
+        };
+
+        let blue_player = match blue_queue.remove() {
+            Ok(player) => player,
+            Err(err) => {
+                log::error!("blue player size was not the same! {}!", err);
+                return CreateEmbed::new().title("Error Embed");
+            }
+        };
 
         fields.push(get_fields_for_embed(blue_player));
         fields.push(("[]".to_string(), "[]".to_string(), true));
