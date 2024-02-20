@@ -28,7 +28,9 @@ pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &Comma
 
     for player_id_input in PLAYERS_IDS {
         match get_riot_id_from_string(&player_id_input.to_string()) {
-            None => {},
+            None => {
+                log::info!("Could not find the player {}", player_id_input)
+            },
             Some(riot_id) => players.push(riot_id)
         }
     }
@@ -46,7 +48,7 @@ pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &Comma
             continue;
         }
 
-        let mut match_players: Vec<MatchPlayer> = [].to_vec();
+        let mut match_players: Vec<MatchPlayer> = vec![];
         for participant in current_match.participants {
             let rank: Option<LeagueEntry> = get_rank_of_player(participant.summoner_id, QueueType::RANKED_SOLO_5x5).await;
             match_players.push(MatchPlayer { rank, champion_id: participant.champion_id, team_id: participant.team_id, summoner_name: participant.summoner_name })
