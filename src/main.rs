@@ -1,6 +1,5 @@
 mod commands;
 mod utils;
-mod sockets;
 
 use std::env;
 use std::time::Duration;
@@ -61,13 +60,6 @@ impl EventHandler for Handler {
                 commands::createprivatevoicechannel::cleanup_unused_channels(&ctx, guild_id).await;
             }
         });
-
-        // TODO
-        // Setup a webhook to listen to when boosted streamers go live
-        // https://dev.twitch.tv/docs/eventsub/handling-websocket-events/
-        // let join = task::spawn(async {
-        //     twitch::connect_to_socket();
-        // });
     }
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
