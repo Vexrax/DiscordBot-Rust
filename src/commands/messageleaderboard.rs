@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::format;
 use std::hash::Hash;
 use futures::StreamExt;
 use serenity::all::{CacheHttp, ChannelId, Color, CommandInteraction, CreateEmbed, CreateEmbedFooter, CreateMessage, User};
@@ -8,8 +9,8 @@ use serenity::model::application::ResolvedOption;
 
 use crate::utils::discord_message::respond_to_interaction;
 
-const AMOUNT_OF_LEADERBOARD_POSITIONS_TO_DISPLAY: i32 = 7;
-
+const AMOUNT_OF_LEADERBOARD_POSITIONS_TO_DISPLAY_PER_FIELD: i32 = 9;
+const MAX_FIELDS: i32 = 21;
 pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
 
     let guild = command.guild_id.unwrap();
@@ -21,7 +22,6 @@ pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &Comma
     let mut message_counts_by_channel_by_user: HashMap<String, HashMap<User, u32>> = HashMap::new();
 
     for channels in all_channels {
-
         log::info!("Starting Channel: {:?}", channels.0.name(&ctx.http).await);
         let messages_in_channel = get_all_messages_in_channel(channels.0, ctx).await;
         match channels.0.name(ctx).await {
@@ -35,7 +35,7 @@ pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &Comma
         merge_maps(&mut message_counts_by_user, messages_in_channel.clone());
     }
 
-    let embed = build_embed(&ctx, message_counts_by_user, message_counts_by_channel_by_user);
+    let embed = build_embed(message_counts_by_user, message_counts_by_channel_by_user);
     let _ = command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
 }
 
@@ -43,8 +43,7 @@ pub fn register() -> CreateCommand {
     CreateCommand::new("messageleaderboard").description("Prints out message leaderboard")
 }
 
-pub fn build_embed(ctx: &Context, message_counts_by_user: HashMap<User, u32>, message_counts_by_channel_by_user: HashMap<String, HashMap<User, u32>>) -> CreateEmbed {
-
+pub fn build_embed(message_counts_by_user: HashMap<User, u32>, message_counts_by_channel_by_user: HashMap<String, HashMap<User, u32>>) -> CreateEmbed {
     let mut message_counts_by_channel_sorted: Vec<_> = get_messages_by_channel(message_counts_by_channel_by_user).into_iter().collect();
     message_counts_by_channel_sorted.sort_by(|a, b| b.1.cmp(&a.1));
 
@@ -53,30 +52,34 @@ pub fn build_embed(ctx: &Context, message_counts_by_user: HashMap<User, u32>, me
 
     let mut fields = vec![];
     let mut i = 0;
+    let mut leaderboard_string_builder: String = "".to_string();
     for user in message_counts_by_user_sorted {
 
-        // Discord has max fields of 25 7*3 = 21
-        if i > AMOUNT_OF_LEADERBOARD_POSITIONS_TO_DISPLAY {
+        if i > MAX_FIELDS {
             continue;
         }
 
-        fields.push(("Username", user.0.name, true));
-        fields.push(("⠀⠀⠀⠀Messages", format!("⠀⠀⠀⠀{}", user.1), true));
-        fields.push(("⠀⠀⠀⠀", "⠀⠀⠀⠀".to_string(), true));
+        if i % AMOUNT_OF_LEADERBOARD_POSITIONS_TO_DISPLAY_PER_FIELD == 0 {
+            fields.push(("", leaderboard_string_builder, false));
+            leaderboard_string_builder = "".to_string();
+        }
+
+        let row = format!("{}. {}:⠀{}", i+1, user.0.name, user.1); //uses invisible chars
+        leaderboard_string_builder = format!("{}{}\n", leaderboard_string_builder, row);
         i+=1;
     }
 
     match message_counts_by_channel_sorted.get(0) {
         None => {}
         Some(value) => {
-            fields.push(("Most Used Channel", format!("{}", value.clone().0), true));
+            fields.push(("Most Used Channel", format!("{}", value.clone().0), false));
         }
     }
 
 
     return  CreateEmbed::new()
         .title(&"Message Leaderboard".to_string())
-        .description(&format!("Top {} yappers in boosted", AMOUNT_OF_LEADERBOARD_POSITIONS_TO_DISPLAY))
+        .description(&format!("Top {} yappers in boosted", AMOUNT_OF_LEADERBOARD_POSITIONS_TO_DISPLAY_PER_FIELD))
         .color(Color::TEAL)
         .fields(fields.into_iter())
         .thumbnail("https://tr.rbxcdn.com/04c6e20f26515ddbcbc5adaf78ce6f09/420/420/Hat/Png")
