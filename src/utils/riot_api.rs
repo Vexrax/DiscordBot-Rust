@@ -16,7 +16,7 @@ pub async fn get_riot_account(game_name: &str, tagline: &str) -> Option<Account>
     match riot_api.account_v1().get_by_riot_id(REGION, game_name, tagline).await {
         Ok(riot_account_maybe) => return riot_account_maybe,
         Err(err) =>  {
-            log::error!("Riot api errored: {}", err);
+            log::error!("Riot api errored, game name: {}, tagline: {}, err {}", game_name, tagline, err);
             None
         }
     }
@@ -28,7 +28,7 @@ pub async fn get_summoner(riot_account: &Account) -> Option<Summoner> {
     match riot_api.summoner_v4().get_by_puuid(PLATFORM, &riot_account.puuid).await {
         Ok(riot_summoner) => return Some(riot_summoner),
         Err(err) =>  {
-            log::error!("Riot api errored: {}", err);
+            log::error!("Riot api errored, err: {}", err);
             None
         }
     }
@@ -39,7 +39,7 @@ pub async fn get_match_by_id(match_id: &str) -> Option<Match> {
     match riot_api.match_v5().get_match(REGION, match_id).await {
         Ok(league_match) => return league_match,
         Err(err) =>  {
-            log::error!("Riot api errored: {}", err);
+            log::error!("Riot api errored: matchId: {}, err: {}", match_id, err);
             None
         }
     }
@@ -50,7 +50,7 @@ pub async fn get_match_ids(puuid: &str, queue: Queue, start_time_epoch_seconds: 
     match riot_api.match_v5().get_match_ids_by_puuid(REGION, puuid, Some(amount_to_search_for), None, Some(queue), Some(start_time_epoch_seconds), Some(start_index), None).await {
         Ok(matches) => Some(matches),
         Err(err) =>  {
-            log::error!("Riot api errored: {}", err);
+            log::error!("Riot api errored: puuid: {}, err {}", puuid, err);
             None
         }
     }
@@ -82,11 +82,11 @@ pub async fn get_current_patch() -> String {
     let source = format!("{}/api/versions.json", DDRAGON_BASE);
     return match reqwest::get(source).await {
         Ok(response) => {
-            return response.json::<serde_json::Value>().await.unwrap().get(0).unwrap().to_string().replace('"', "");
+            response.json::<serde_json::Value>().await.unwrap().get(0).unwrap().to_string().replace('"', "")
         }
         Err(err) => {
             eprintln!("Something went wrong while trying to find current patch: {}", err);
-            return "14.1.1".to_string();
+            "14.1.1".to_string()
         }
     }
 }
