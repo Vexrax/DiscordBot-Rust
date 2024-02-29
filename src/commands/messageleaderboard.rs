@@ -29,7 +29,7 @@ pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &Comma
                 message_counts_by_channel_by_user.insert(name, messages_in_channel.clone());
             }
             Err(err) => {
-                log::info!(format!("Channel did not have a name err: {}", err))
+                log::info!("{}", format!("Channel did not have a name err: {}", err))
             }
         }
         merge_maps(&mut message_counts_by_user, messages_in_channel.clone());
