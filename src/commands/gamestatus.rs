@@ -1,8 +1,9 @@
 use std::collections::HashSet;
+use std::fmt::format;
 use std::string::ToString;
 use riven::models::league_v4::LeagueEntry;
-use serenity::all::{CommandInteraction};
-use serenity::builder::{CreateCommand, CreateEmbed, CreateMessage};
+use serenity::all::{Color, CommandInteraction};
+use serenity::builder::{CreateCommand, CreateEmbed, CreateEmbedFooter, CreateMessage};
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
 use riven::consts::{QueueType, Team, Champion};
@@ -67,53 +68,57 @@ pub fn register() -> CreateCommand {
 async fn build_embed(main_player_riot_summoner: Summoner, match_players: Vec<MatchPlayer>, game_length_seconds: i64) -> CreateEmbed {
     let mut fields: Vec<(String, String, bool)> =vec![];
 
-    let mut red_queue: Queue<MatchPlayer> = queue![];
-    let mut blue_queue: Queue<MatchPlayer> = queue![];
+    let mut red_team: Vec<MatchPlayer> = vec![];
+    let mut blue_team: Vec<MatchPlayer> = vec![];
 
     for match_player in match_players {
         if match_player.team_id == Team::BLUE {
-            let _ = red_queue.add(match_player);
+            let _ = red_team.push(match_player);
         } else if match_player.team_id == Team::RED {
-            let _ = blue_queue.add(match_player);
+            let _ = blue_team.push(match_player);
         }
     }
 
-    while red_queue.size() > 0 || blue_queue.size() > 0 {
-        let red_player =  match red_queue.remove() {
-            Ok(player) => player,
-            Err(err) => {
-                log::error!("Red player size was not the same! {}!", err);
-                return CreateEmbed::new().title("Error Embed");
-            }
-        };
+    fields.push(("Blue Team".to_string(), "".to_string(), false));
+    fields.push(("".to_string(), build_compact_string_for_embed(blue_team.clone(), &build_player_string), true));
+    fields.push(("".to_string(), build_compact_string_for_embed(blue_team.clone(), &build_champion_string), true));
+    fields.push(("".to_string(), build_compact_string_for_embed(blue_team.clone(), &build_rank_string), true));
 
-        let blue_player = match blue_queue.remove() {
-            Ok(player) => player,
-            Err(err) => {
-                log::error!("blue player size was not the same! {}!", err);
-                return CreateEmbed::new().title("Error Embed");
-            }
-        };
-
-        fields.push(get_fields_for_embed(blue_player));
-        fields.push(("[]".to_string(), "[]".to_string(), true));
-        fields.push(get_fields_for_embed(red_player));
-    }
-
+    fields.push(("Red Team".to_string(), "".to_string(), false));
+    fields.push(("".to_string(), build_compact_string_for_embed(red_team.clone(), &build_player_string), true));
+    fields.push(("".to_string(), build_compact_string_for_embed(red_team.clone(), &build_champion_string), true));
+    fields.push(("".to_string(), build_compact_string_for_embed(red_team.clone(), &build_rank_string), true));
 
     let embed = CreateEmbed::new()
-        .title(format!("{}'s Game", main_player_riot_summoner.name))
-        .description(&format!("In game for {} minutes", game_length_seconds / 60))
+        .title(format!(":computer: {}'s Game", main_player_riot_summoner.name))
+        .description(format!("{} is currently GAMING", main_player_riot_summoner.name))
+        .footer(CreateEmbedFooter::new(&format!("In game for {} minutes", game_length_seconds / 60)))
         .thumbnail(get_profile_icon_url(main_player_riot_summoner.profile_icon_id).await)
+        .color(Color::DARK_ORANGE)
         .fields(fields.into_iter());
     return embed;
 }
 
-fn get_fields_for_embed(match_player: MatchPlayer) -> (String, String, bool) {
-    let display_rank = match_player.rank.as_ref()
-        .map(|val| format!("{:?} {:?}", val.tier.unwrap(), val.rank.unwrap())) // TODO might need to handle this better
-        .unwrap_or_else(|| "UNRANKED".to_string());
-    let title = format!("{} ({})", match_player.summoner_name, match_player.champion_id.identifier().unwrap_or_else(|| "Unknown Champ?"));
-    return (title, display_rank, true);
+fn build_champion_string(old: String, player: MatchPlayer) -> String {
+    return format!("{}⠀⠀{}\n", old, player.champion_id.identifier().unwrap_or_else(|| "Unknown Champ?"))
 }
+
+fn build_player_string(old: String, player: MatchPlayer) -> String {
+    return format!("{}{}\n", old, player.summoner_name)
+}
+
+fn build_rank_string(old: String, player: MatchPlayer) -> String {
+    return format!("{}⠀⠀⠀⠀⠀⠀⠀⠀{}⠀⠀⠀\n", old, player.rank.as_ref()
+        .map(|val| format!("{:?} {:?}", val.tier.unwrap(), val.rank.unwrap())) // TODO might need to handle this better
+        .unwrap_or_else(|| "UNRANKED".to_string()));
+}
+
+fn build_compact_string_for_embed(match_players: Vec<MatchPlayer>, formatter_fn: &dyn Fn(String, MatchPlayer) -> String) -> String {
+    let mut build_string = "".to_string();
+    for player in match_players {
+        build_string = formatter_fn(build_string, player);
+    }
+    return build_string;
+}
+
 

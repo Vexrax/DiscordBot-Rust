@@ -713,6 +713,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4271d37baee1b8c7e4b708028c57d816cf9d2434acb33a549475f78c181f6253"
 
 [[package]]
+name = "gloo-timers"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbb143cf96099802033e0d4f4963b19fd2e0b728bcf076cd9cf7f6634f092994"
+dependencies = [
+ "futures-channel",
+ "futures-core",
+ "js-sys",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "h2"
 version = "0.3.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1507,11 +1519,12 @@ dependencies = [
 
 [[package]]
 name = "riven"
-version = "2.27.0"
+version = "2.34.0-beta.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0bf71113b44f9eb02fd441910fb582b70e0e1878d8e2fad5d81cf71ec8f51ae7"
+checksum = "113e146a43d1b2d97c4c779e88b1020182068e0c6f28f692ac7588dd5024c786"
 dependencies = [
- "lazy_static",
+ "futures",
+ "gloo-timers",
  "log",
  "num_enum",
  "parking_lot",
@@ -1523,6 +1536,7 @@ dependencies = [
  "strum",
  "strum_macros",
  "tokio",
+ "web-time",
 ]
 
 [[package]]
@@ -2091,7 +2105,6 @@ dependencies = [
  "libc",
  "mio",
  "num_cpus",
- "parking_lot",
  "pin-project-lite",
  "signal-hook-registry",
  "socket2 0.5.5",
@@ -2490,6 +2503,16 @@ name = "web-sys"
 version = "0.3.66"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "50c24a44ec86bb68fbecd1b3efed7e85ea5621b39b35ef2766b66cd984f8010f"
+dependencies = [
+ "js-sys",
+ "wasm-bindgen",
+]
+
+[[package]]
+name = "web-time"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ee269d72cc29bf77a2c4bc689cc750fb39f5cbd493d2205bbb3f5c7779cf7b0"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
