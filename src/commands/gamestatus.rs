@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::fmt::format;
 use std::string::ToString;
 use riven::models::league_v4::LeagueEntry;
 use serenity::all::{Color, CommandInteraction};
@@ -9,7 +8,6 @@ use serenity::model::application::ResolvedOption;
 use riven::consts::{QueueType, Team, Champion};
 use riven::models::summoner_v4::Summoner;
 use crate::commands::business::league_of_legends::{get_current_match_by_riot_summoner, get_rank_of_player, get_riot_id_from_string, get_summoners_by_riot_ids, RiotId};
-use queues::*;
 
 use crate::utils::discord_message::respond_to_interaction;
 use crate::utils::riot_api::{get_profile_icon_url};

@@ -1,8 +1,6 @@
 use std::collections::HashMap;
-use std::fmt::format;
-use std::hash::Hash;
 use futures::StreamExt;
-use serenity::all::{CacheHttp, ChannelId, Color, CommandInteraction, CreateEmbed, CreateEmbedFooter, CreateMessage, User};
+use serenity::all::{ChannelId, Color, CommandInteraction, CreateEmbed, CreateEmbedFooter, CreateMessage, User};
 use serenity::builder::{CreateCommand};
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
