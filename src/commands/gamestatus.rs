@@ -6,6 +6,8 @@ use serenity::builder::{CreateCommand, CreateEmbed, CreateEmbedFooter, CreateMes
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
 use riven::consts::{QueueType, Team, Champion};
+use riven::consts::Division::IV;
+use riven::consts::Tier::UNRANKED;
 use riven::models::summoner_v4::Summoner;
 use crate::commands::business::league_of_legends::{get_current_match_by_riot_summoner, get_rank_of_player, get_riot_id_from_string, get_summoners_by_riot_ids, RiotId};
 
@@ -20,7 +22,10 @@ struct MatchPlayer {
     summoner_name: String,
 }
 
-const PLAYERS_IDS: [&str; 5] = ["Vexrax#FAKER", "Zafa#NA1", "Earleking#NA1", "rgrou2#NA1", "grant#erino"];
+const PLAYERS_IDS: [&str; 11] = [
+    "Vexrax#FAKER", "Zafa#NA1", "Earleking#NA1", "rgrou2#NA1", "grant#erino", "Perky#GOAT", "LeeSinners#NA1",
+    "Koality Player#NA1", "Soulbert#koggy", "ShadyGecko#1313", "Arcadius#NA1"
+];
 pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     respond_to_interaction(&ctx, &command, &"Checking to see if anyone in boosted is in game...".to_string().to_string()).await;
     let mut players: Vec<RiotId> = vec![];
@@ -107,7 +112,7 @@ fn build_player_string(old: String, player: MatchPlayer) -> String {
 
 fn build_rank_string(old: String, player: MatchPlayer) -> String {
     return format!("{}⠀⠀⠀⠀⠀⠀⠀⠀{}⠀⠀⠀\n", old, player.rank.as_ref()
-        .map(|val| format!("{:?} {:?}", val.tier.unwrap(), val.rank.unwrap())) // TODO might need to handle this better
+        .map(|val| format!("{:?} {:?}", val.tier.unwrap_or_else(|_| UNRANKED), val.rank.unwrap_or_else(|_| IV)))
         .unwrap_or_else(|| "UNRANKED".to_string()));
 }
 
