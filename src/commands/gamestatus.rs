@@ -112,7 +112,7 @@ fn build_player_string(old: String, player: MatchPlayer) -> String {
 
 fn build_rank_string(old: String, player: MatchPlayer) -> String {
     return format!("{}⠀⠀⠀⠀⠀⠀⠀⠀{}⠀⠀⠀\n", old, player.rank.as_ref()
-        .map(|val| format!("{:?} {:?}", val.tier.unwrap_or_else(|_| UNRANKED), val.rank.unwrap_or_else(|_| IV)))
+        .map(|val| format!("{:?} {:?}", val.tier.unwrap_or_else(|| UNRANKED), val.rank.unwrap_or_else(|| IV)))
         .unwrap_or_else(|| "UNRANKED".to_string()));
 }
 
