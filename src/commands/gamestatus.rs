@@ -58,7 +58,7 @@ pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &Comma
             match_players.push(MatchPlayer { rank, champion_id: participant.champion_id, team_id: participant.team_id, summoner_name: participant.summoner_name })
         }
 
-        let match_embed = build_embed(riot_summoner, match_players, current_match.game_length).await;
+        let match_embed = build_embed(riot_summoner, match_players, current_match.game_length, current_match.game_id).await;
         let _ = command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(match_embed)).await;
         matches_generated.insert(current_match.game_id);
     }
@@ -68,7 +68,7 @@ pub fn register() -> CreateCommand {
     CreateCommand::new("gamestatus").description("Gets the status of the registered players in the server")
 }
 
-async fn build_embed(main_player_riot_summoner: Summoner, match_players: Vec<MatchPlayer>, game_length_seconds: i64) -> CreateEmbed {
+async fn build_embed(main_player_riot_summoner: Summoner, match_players: Vec<MatchPlayer>, game_length_seconds: i64, game_id: i64) -> CreateEmbed {
     let mut fields: Vec<(String, String, bool)> =vec![];
 
     let mut red_team: Vec<MatchPlayer> = vec![];
@@ -94,7 +94,7 @@ async fn build_embed(main_player_riot_summoner: Summoner, match_players: Vec<Mat
 
     let embed = CreateEmbed::new()
         .title(format!(":computer: {}'s Game", main_player_riot_summoner.name))
-        .description(format!("{} is currently GAMING", main_player_riot_summoner.name))
+        .description(format!("Game Id: {}", game_id))
         .footer(CreateEmbedFooter::new(&format!("In game for {} minutes", game_length_seconds / 60)))
         .thumbnail(get_profile_icon_url(main_player_riot_summoner.profile_icon_id).await)
         .color(Color::DARK_ORANGE)
