@@ -1,7 +1,7 @@
 use riven::consts::{Queue, QueueType};
 use riven::models::league_v4::LeagueEntry;
 use riven::models::match_v5::Match;
-use riven::models::spectator_v4::CurrentGameInfo;
+use riven::models::spectator_v5::CurrentGameInfo;
 use riven::models::summoner_v4::Summoner;
 use crate::utils::riot_api::{get_current_match, get_league_entries, get_match_by_id, get_match_ids, get_riot_account, get_summoner};
 

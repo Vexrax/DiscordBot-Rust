@@ -1519,9 +1519,9 @@ dependencies = [
 
 [[package]]
 name = "riven"
-version = "2.34.0-beta.0"
+version = "2.34.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "113e146a43d1b2d97c4c779e88b1020182068e0c6f28f692ac7588dd5024c786"
+checksum = "9fb04a1aea7c4449b237564a326a60625344d3eebcd12f2188ea8fda676fb9f5"
 dependencies = [
  "futures",
  "gloo-timers",

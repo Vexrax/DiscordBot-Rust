@@ -22,9 +22,9 @@ struct MatchPlayer {
     summoner_name: String,
 }
 
-const PLAYERS_IDS: [&str; 11] = [
+const PLAYERS_IDS: [&str; 12] = [
     "Vexrax#FAKER", "Zafa#NA1", "Earleking#NA1", "rgrou2#NA1", "grant#erino", "Perky#GOAT", "LeeSinners#NA1",
-    "Koality Player#NA1", "Soulbert#koggy", "ShadyGecko#1313", "Arcadius#NA1"
+    "Koality Player#NA1", "Soulbert#koggy", "ShadyGecko#1313", "Arcadius#NA1", "Fayt#0001"
 ];
 pub async fn run(_options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     respond_to_interaction(&ctx, &command, &"Checking to see if anyone in boosted is in game...".to_string().to_string()).await;
