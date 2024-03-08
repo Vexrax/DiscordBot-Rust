@@ -1,16 +1,14 @@
 use std::cmp;
 use std::collections::HashMap;
-use std::fmt::format;
 use serenity::all::{Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbed, CreateEmbedFooter, CreateMessage, ResolvedOption, ResolvedValue};
 use crate::commands::business::league_of_legends::{get_recent_match_data, get_riot_id_from_string};
 use crate::utils::discord_message::{respond_to_interaction, say_message_in_channel};
 use crate::utils::riot_api::{get_profile_icon_url, get_riot_account, get_summoner};
 use std::time::{SystemTime, Duration};
-use riven::consts::{Champion};
+use riven::consts::{Champion, Queue};
 use riven::models::match_v5::{Match, Participant};
 use riven::models::summoner_v4::Summoner;
 use serde::{Deserialize, Serialize};
-use crate::utils::string_utils::INVISIBLE_UNICODE_CHAR;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct ScoutingInfo {
@@ -22,7 +20,13 @@ struct ScoutingInfo {
     assists: i32,
     custom_games: i32,
 }
-
+const VALID_QUEUES_FOR_SCOUTING: [Queue; 5]= [
+    Queue::SUMMONERS_RIFT_NORMAL_QUICKPLAY_,
+    Queue::SUMMONERS_RIFT_5V5_DRAFT_PICK,
+    Queue::SUMMONERS_RIFT_5V5_RANKED_FLEX,
+    Queue::SUMMONERS_RIFT_5V5_RANKED_SOLO,
+    Queue::CUSTOM
+];
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     let riot_ids_inputs = get_riot_ids_from_options(options);
     let mut failed_riot_ids: Vec<String> = vec![];
@@ -55,7 +59,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
         let days_ago: u64 = 30;
         let start_time_epoch_seconds = (SystemTime::now() - Duration::from_secs(days_ago * 24 * 60 * 60)).duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
 
-        let match_data = get_recent_match_data(summoner.clone(), start_time_epoch_seconds as i64).await;
+        let match_data = get_recent_match_data(summoner.clone(), start_time_epoch_seconds as i64, VALID_QUEUES_FOR_SCOUTING.to_vec()).await;
 
         let embed = build_embed_for_summoner(&build_scouting_info_for_player(match_data, riot_account.puuid), &summoner, days_ago).await;
         let _ = command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
@@ -114,7 +118,7 @@ async fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo
         total_games += champion_info.1.games;
 
         champs_build_string = format!("{}{}\n", champs_build_string, champion_info.0.name().expect("Expected Name to exist").to_string());
-        winrate_build_string = format!("{}{}\n", winrate_build_string, format!("{}% WR", wr));
+        winrate_build_string = format!("{}{}\n", winrate_build_string, format!("{}% WR ({})", wr, champion_info.1.games));
         kda_build_string = format!("{}{}\n", kda_build_string, format!("{} ({})", kda, kills_deaths_assists));
     });
 

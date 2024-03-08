@@ -10,9 +10,8 @@ pub struct RiotId {
     pub(crate) tagline: String,
 }
 
-pub async fn get_recent_match_ids(summoner: Summoner, start_time_epoch_seconds: i64) -> Vec<String> {
+pub async fn get_recent_match_ids(summoner: Summoner, start_time_epoch_seconds: i64, valid_queues: Vec<Queue>) -> Vec<String> {
     // These are valid queues for the scouting usecase
-    let valid_queues = [Queue::SUMMONERS_RIFT_NORMAL_QUICKPLAY_, Queue::SUMMONERS_RIFT_5V5_DRAFT_PICK, Queue::SUMMONERS_RIFT_5V5_RANKED_FLEX, Queue::SUMMONERS_RIFT_5V5_RANKED_SOLO, Queue::CUSTOM];
     let mut matches_for_all_valid_queues = vec![];
     for queue in valid_queues {
         matches_for_all_valid_queues.extend(get_recent_match_ids_for_queue(&*summoner.puuid, queue, start_time_epoch_seconds).await);
@@ -40,8 +39,8 @@ async fn get_match_ids_for(puuid: &str, queue: Queue, start_time_epoch_seconds: 
     }
 }
 
-pub async fn get_recent_match_data(summoner: Summoner, start_time_epoch_seconds: i64) -> Vec<Match>  {
-    let recent_match_ids = get_recent_match_ids(summoner, start_time_epoch_seconds).await;
+pub async fn get_recent_match_data(summoner: Summoner, start_time_epoch_seconds: i64, valid_queues: Vec<Queue>) -> Vec<Match>  {
+    let recent_match_ids = get_recent_match_ids(summoner, start_time_epoch_seconds, valid_queues).await;
     let mut match_data: Vec<Match> = vec![];
     for match_id in recent_match_ids {
         match get_match_by_id(&*match_id).await {
