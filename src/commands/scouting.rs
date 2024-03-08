@@ -1,5 +1,6 @@
 use std::cmp;
 use std::collections::HashMap;
+use std::fmt::format;
 use serenity::all::{Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbed, CreateEmbedFooter, CreateMessage, ResolvedOption, ResolvedValue};
 use crate::commands::business::league_of_legends::{get_recent_match_data, get_riot_id_from_string};
 use crate::utils::discord_message::{respond_to_interaction, say_message_in_channel};
@@ -9,6 +10,7 @@ use riven::consts::{Champion};
 use riven::models::match_v5::{Match, Participant};
 use riven::models::summoner_v4::Summoner;
 use serde::{Deserialize, Serialize};
+use crate::utils::string_utils::INVISIBLE_UNICODE_CHAR;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct ScoutingInfo {
@@ -91,12 +93,16 @@ pub fn register() -> CreateCommand {
 }
 
 async fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo>, summoner: &Summoner, time_range_days: u64) -> CreateEmbed {
-    let mut champs: Vec<(String, String, bool)> = vec![];
+    let mut fields: Vec<(String, String, bool)> = vec![];
     let mut total_games: i32 = 0;
 
     let mut scouting_vec: Vec<_> = scouting_info.into_iter().collect();
     scouting_vec.sort_by_key(|&(_, ref info)| std::cmp::Reverse(info.games));
 
+
+    let mut champs_build_string = "".to_string();
+    let mut winrate_build_string = "".to_string();
+    let mut kda_build_string = "".to_string();
 
     scouting_vec.iter().for_each(|champion_info| {
         let wr = format!("{:.2}", (champion_info.1.win as f64 / champion_info.1.games as f64) * 100.0);
@@ -107,22 +113,29 @@ async fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo
                                            champion_info.1.assists as f64 / champion_info.1.games as f64);
         total_games += champion_info.1.games;
 
-        // Discord only supports 25 fields max
-        if champs.len() < 25 {
-            // INFO: this uses some invisible characters to format the message! be careful
-            let formatted =  format!(":regional_indicator_w::regional_indicator_r: {}% ⠀⠀⠀:axe: {} ({})", wr, kda, kills_deaths_assists);
-            let title = format!("{} ({})", champion_info.0.name().expect("Expected Name to exist"), champion_info.1.games);
-            champs.push((title.parse().unwrap(), formatted, false));
-        }
+        champs_build_string = format!("{}{}\n", champs_build_string, champion_info.0.name().expect("Expected Name to exist").to_string());
+        winrate_build_string = format!("{}{}\n", winrate_build_string, format!("{}% WR", wr));
+        kda_build_string = format!("{}{}\n", kda_build_string, format!("{} ({})", kda, kills_deaths_assists));
     });
+
+    // Headers
+    fields.push(("Champions".to_string(), "".to_string(), false));
+    fields.push(("".to_string(), "Champion".to_string(), true));
+    fields.push(("".to_string(), "Winrate".to_string(), true));
+    fields.push(("".to_string(), "KDA".to_string(), true));
+
+    fields.push(("".to_string(), champs_build_string, true));
+    fields.push(("".to_string(), winrate_build_string, true));
+    fields.push(("".to_string(), kda_build_string, true));
 
     return CreateEmbed::new()
         .title(&format!("Scouting report for {} for the last {} days", summoner.name, time_range_days))
         .description(&format!("Games: {}. Report looks at Normals, Ranked and Tournament Draft games", total_games))
         .color(Color::DARK_PURPLE)
-        .fields(champs.into_iter())
+        .fields(fields.into_iter())
         .footer(CreateEmbedFooter::new("TODO info about pagination"))
         .thumbnail(get_profile_icon_url(summoner.profile_icon_id).await);
+
 }
 
 fn build_scouting_info_for_player(match_data: Vec<Match>, puuid: String) -> HashMap<Champion, ScoutingInfo> {
