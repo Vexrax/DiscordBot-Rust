@@ -20,6 +20,13 @@ struct ScoutingInfo {
     assists: i32,
     custom_games: i32,
 }
+
+struct CommandOptions {
+    riot_ids: Vec<String>,
+    days_ago: u64
+}
+const DEFAULT_DAYS_AGO: u64 = 30;
+const MAX_DAYS_AGO: u64 = 366;
 const VALID_QUEUES_FOR_SCOUTING: [Queue; 5]= [
     Queue::SUMMONERS_RIFT_NORMAL_QUICKPLAY_,
     Queue::SUMMONERS_RIFT_5V5_DRAFT_PICK,
@@ -28,10 +35,10 @@ const VALID_QUEUES_FOR_SCOUTING: [Queue; 5]= [
     Queue::CUSTOM
 ];
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
-    let riot_ids_inputs = get_riot_ids_from_options(options);
+    let command_options = get_riot_ids_from_options(options);
     let mut failed_riot_ids: Vec<String> = vec![];
-    respond_to_interaction(ctx, command, &format!("Building a recent scouting report for {:?}", riot_ids_inputs).to_string()).await;
-    for riot_id_input in riot_ids_inputs {
+    respond_to_interaction(ctx, command, &format!("Building a recent scouting report for {:?}", command_options.riot_ids).to_string()).await;
+    for riot_id_input in command_options.riot_ids {
         let riot_id = match get_riot_id_from_string(&riot_id_input) {
             Some(riot_id_data) => riot_id_data,
             None => {
@@ -56,12 +63,11 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
             },
         };
 
-        let days_ago: u64 = 30;
-        let start_time_epoch_seconds = (SystemTime::now() - Duration::from_secs(days_ago * 24 * 60 * 60)).duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
+        let start_time_epoch_seconds = (SystemTime::now() - Duration::from_secs(command_options.days_ago * 24 * 60 * 60)).duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
 
         let match_data = get_recent_match_data(summoner.clone(), start_time_epoch_seconds as i64, VALID_QUEUES_FOR_SCOUTING.to_vec()).await;
 
-        let embed = build_embed_for_summoner(&build_scouting_info_for_player(match_data, riot_account.puuid), &summoner, days_ago).await;
+        let embed = build_embed_for_summoner(&build_scouting_info_for_player(match_data, riot_account.puuid), &summoner, command_options.days_ago).await;
         let _ = command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
     }
 
@@ -93,7 +99,10 @@ pub fn register() -> CreateCommand {
             CreateCommandOption::new(CommandOptionType::String, "summoner5", "summoner5")
                 .required(false),
         )
-
+        .add_option(
+            CreateCommandOption::new(CommandOptionType::Integer, "days_ago", "amount of days ago to look at")
+                .required(false),
+        )
 }
 
 async fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo>, summoner: &Summoner, time_range_days: u64) -> CreateEmbed {
@@ -137,9 +146,29 @@ async fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo
         .description(&format!("Games: {}. Report looks at Normals, Ranked and Tournament Draft games", total_games))
         .color(Color::DARK_PURPLE)
         .fields(fields.into_iter())
-        .footer(CreateEmbedFooter::new("TODO info about pagination"))
         .thumbnail(get_profile_icon_url(summoner.profile_icon_id).await);
+}
 
+fn get_riot_ids_from_options(options: &[ResolvedOption<'_>]) -> CommandOptions {
+    let mut riot_ids: Vec<String> = vec![];
+    let mut days_ago = DEFAULT_DAYS_AGO;
+    options.iter().for_each(|option1| {
+        match option1.value {
+            ResolvedValue::String(val) => {
+                riot_ids.push(val.to_string());
+            }
+            ResolvedValue::Integer(val) => {
+                if val < MAX_DAYS_AGO as i64  {
+                    days_ago = val as u64;
+                }
+            }
+            _ => {}
+        }
+    });
+    return CommandOptions {
+        riot_ids,
+        days_ago,
+    };
 }
 
 fn build_scouting_info_for_player(match_data: Vec<Match>, puuid: String) -> HashMap<Champion, ScoutingInfo> {
@@ -190,15 +219,3 @@ fn build_scouting_info_for_single_match(participants: Vec<Participant>, puuid: S
     })
 }
 
-fn get_riot_ids_from_options(options: &[ResolvedOption<'_>]) -> Vec<String> {
-    let mut riot_ids: Vec<String> = vec![];
-    options.iter().for_each(|option1| {
-        match option1.value {
-            ResolvedValue::String(val) => {
-                riot_ids.push(val.to_string());
-            }
-            _ => {}
-        }
-    });
-    return riot_ids;
-}
