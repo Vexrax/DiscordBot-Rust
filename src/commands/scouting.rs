@@ -108,7 +108,7 @@ pub fn register() -> CreateCommand {
 async fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo>, summoner: &Summoner, time_range_days: u64) -> CreateEmbed {
     let mut fields: Vec<(String, String, bool)> = vec![];
     let mut total_games: i32 = 0;
-
+    let mut total_wins: i32 = 0;
     let mut scouting_vec: Vec<_> = scouting_info.into_iter().collect();
     scouting_vec.sort_by_key(|&(_, ref info)| std::cmp::Reverse(info.games));
 
@@ -125,6 +125,7 @@ async fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo
                                            champion_info.1.deaths as f64 / champion_info.1.games as f64,
                                            champion_info.1.assists as f64 / champion_info.1.games as f64);
         total_games += champion_info.1.games;
+        total_wins += champion_info.1.win;
 
         champs_build_string = format!("{}{}\n", champs_build_string, champion_info.0.name().expect("Expected Name to exist").to_string());
         winrate_build_string = format!("{}{}\n", winrate_build_string, format!("{}% WR ({})", wr, champion_info.1.games));
@@ -146,6 +147,7 @@ async fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo
         .description(&format!("Games: {}. Report looks at Normals, Ranked and Tournament Draft games", total_games))
         .color(Color::DARK_PURPLE)
         .fields(fields.into_iter())
+        .footer(CreateEmbedFooter::new( format!("Total WR: {:.2}%", (total_wins as f64 / total_games as f64) * 100.0)))
         .thumbnail(get_profile_icon_url(summoner.profile_icon_id).await);
 }
 
