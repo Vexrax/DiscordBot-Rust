@@ -1,4 +1,5 @@
 use std::cmp;
+use std::cmp::min;
 use std::collections::HashMap;
 use serenity::all::{Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbed, CreateEmbedFooter, CreateMessage, ResolvedOption, ResolvedValue};
 use crate::commands::business::league_of_legends::{get_recent_match_data, get_riot_id_from_string};
@@ -26,7 +27,7 @@ struct CommandOptions {
     days_ago: u64
 }
 const DEFAULT_DAYS_AGO: u64 = 30;
-const MAX_DAYS_AGO: u64 = 366;
+const MAX_DAYS_AGO: u64 = 365;
 const VALID_QUEUES_FOR_SCOUTING: [Queue; 5]= [
     Queue::SUMMONERS_RIFT_NORMAL_QUICKPLAY_,
     Queue::SUMMONERS_RIFT_5V5_DRAFT_PICK,
@@ -160,9 +161,7 @@ fn get_riot_ids_from_options(options: &[ResolvedOption<'_>]) -> CommandOptions {
                 riot_ids.push(val.to_string());
             }
             ResolvedValue::Integer(val) => {
-                if val < MAX_DAYS_AGO as i64  {
-                    days_ago = val as u64;
-                }
+                days_ago = min(val as u64, MAX_DAYS_AGO);
             }
             _ => {}
         }
