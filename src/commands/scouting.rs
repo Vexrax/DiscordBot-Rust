@@ -35,8 +35,21 @@ const VALID_QUEUES_FOR_SCOUTING: [Queue; 5]= [
     Queue::SUMMONERS_RIFT_5V5_RANKED_SOLO,
     Queue::CUSTOM
 ];
-pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
-    let command_options = get_riot_ids_from_options(options);
+
+const VALID_QUEUES_FOR_SCOUTING_COMP: [Queue; 1]= [
+    Queue::CUSTOM
+];
+
+pub async fn run_scouting(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
+    run(options, ctx, command, VALID_QUEUES_FOR_SCOUTING.to_vec()).await;
+}
+
+pub async fn run_scouting_for_comp(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
+    run(options, ctx, command, VALID_QUEUES_FOR_SCOUTING_COMP.to_vec()).await;
+}
+
+pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction, queues: Vec<Queue>) {
+    let command_options = get_command_options(options);
     let mut failed_riot_ids: Vec<String> = vec![];
     respond_to_interaction(ctx, command, &format!("Building a recent scouting report for {:?}", command_options.riot_ids).to_string()).await;
     for riot_id_input in command_options.riot_ids {
@@ -66,7 +79,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
 
         let start_time_epoch_seconds = (SystemTime::now() - Duration::from_secs(command_options.days_ago * 24 * 60 * 60)).duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
 
-        let match_data = get_recent_match_data(summoner.clone(), start_time_epoch_seconds as i64, VALID_QUEUES_FOR_SCOUTING.to_vec()).await;
+        let match_data = get_recent_match_data(summoner.clone(), start_time_epoch_seconds as i64, queues.clone()).await;
 
         let embed = build_embed_for_summoner(&build_scouting_info_for_player(match_data, riot_account.puuid), &summoner, command_options.days_ago).await;
         let _ = command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
@@ -77,8 +90,8 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     }
 }
 
-pub fn register() -> CreateCommand {
-    CreateCommand::new("scouting")
+pub fn register(command_name: String) -> CreateCommand {
+    CreateCommand::new(command_name)
         .description("Scouting command to fetch info about players recent champions in soloq and normal")
         .add_option(
             CreateCommandOption::new(CommandOptionType::String, "summoner1", "summoner1")
@@ -152,7 +165,7 @@ async fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo
         .thumbnail(get_profile_icon_url(summoner.profile_icon_id).await);
 }
 
-fn get_riot_ids_from_options(options: &[ResolvedOption<'_>]) -> CommandOptions {
+fn get_command_options(options: &[ResolvedOption<'_>]) -> CommandOptions {
     let mut riot_ids: Vec<String> = vec![];
     let mut days_ago = DEFAULT_DAYS_AGO;
     options.iter().for_each(|option1| {
