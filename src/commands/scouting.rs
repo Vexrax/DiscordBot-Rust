@@ -7,6 +7,7 @@ use crate::utils::discord_message::{respond_to_interaction, say_message_in_chann
 use crate::utils::riot_api::{get_profile_icon_url, get_riot_account, get_summoner};
 use std::time::{SystemTime, Duration};
 use riven::consts::{Champion, Queue};
+use riven::models::account_v1::Account;
 use riven::models::match_v5::{Match, Participant};
 use riven::models::summoner_v4::Summoner;
 use serde::{Deserialize, Serialize};
@@ -81,7 +82,7 @@ async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInt
 
         let match_data = get_recent_match_data(summoner.clone(), start_time_epoch_seconds as i64, queues.clone()).await;
 
-        let embed = build_embed_for_summoner(&build_scouting_info_for_player(match_data, riot_account.puuid), &summoner, command_options.days_ago).await;
+        let embed = build_embed_for_summoner(&build_scouting_info_for_player(match_data, riot_account.clone().puuid), summoner.clone(), riot_account.clone(), command_options.days_ago).await;
         let _ = command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
     }
 
@@ -119,7 +120,7 @@ pub fn register(command_name: String) -> CreateCommand {
         )
 }
 
-async fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo>, summoner: &Summoner, time_range_days: u64) -> CreateEmbed {
+async fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo>, summoner: Summoner, riot_account: Account, time_range_days: u64) -> CreateEmbed {
     let mut fields: Vec<(String, String, bool)> = vec![];
     let mut total_games: i32 = 0;
     let mut total_wins: i32 = 0;
@@ -156,8 +157,11 @@ async fn build_embed_for_summoner(scouting_info: &HashMap<Champion, ScoutingInfo
     fields.push(("".to_string(), winrate_build_string, true));
     fields.push(("".to_string(), kda_build_string, true));
 
+    let name =  riot_account.game_name.unwrap_or_else(||"Unknown".to_string());
+    let tagline =  riot_account.tag_line.unwrap_or_else(||"Unknown".to_string());
+
     return CreateEmbed::new()
-        .title(&format!("Scouting report for {} for the last {} days", summoner.name, time_range_days))
+        .title(&format!("Scouting report for {}#{} for the last {} days", name, tagline, time_range_days))
         .description(&format!("Games: {}. Report looks at Normals, Ranked and Tournament Draft games", total_games))
         .color(Color::DARK_PURPLE)
         .fields(fields.into_iter())

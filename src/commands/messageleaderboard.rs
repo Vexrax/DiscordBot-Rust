@@ -6,6 +6,7 @@ use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
 
 use crate::utils::discord_message::respond_to_interaction;
+use crate::utils::string_utils::INVISIBLE_UNICODE_CHAR;
 
 const AMOUNT_OF_LEADERBOARD_POSITIONS_TO_DISPLAY_PER_FIELD: i32 = 9;
 const MAX_FIELDS: i32 = 21;
@@ -62,7 +63,7 @@ pub fn build_embed(message_counts_by_user: HashMap<User, u32>, message_counts_by
             leaderboard_string_builder = "".to_string();
         }
 
-        let row = format!("{}. {}:⠀{}", i+1, user.0.name, user.1); //uses invisible chars
+        let row = format!("{}.{}{}:{}{}", i+1, user.0.name, INVISIBLE_UNICODE_CHAR, user.1, INVISIBLE_UNICODE_CHAR);
         leaderboard_string_builder = format!("{}{}\n", leaderboard_string_builder, row);
         i+=1;
     }
