@@ -52,7 +52,7 @@ pub async fn run_scouting_for_comp(options: &[ResolvedOption<'_>], ctx: &Context
 async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction, queues: Vec<Queue>) {
     let command_options = get_command_options(options);
     let mut failed_riot_ids: Vec<String> = vec![];
-    respond_to_interaction(ctx, command, &format!("Building a recent scouting report for {:?}", command_options.riot_ids).to_string()).await;
+    respond_to_interaction(ctx, command, &format!("Building a recent scouting report for {}", command_options.riot_ids.join(", ")).to_string()).await;
     for riot_id_input in command_options.riot_ids {
         let riot_id = match get_riot_id_from_string(&riot_id_input) {
             Some(riot_id_data) => riot_id_data,
