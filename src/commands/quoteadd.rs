@@ -1,13 +1,10 @@
-use mongodb::{Database};
-
 use serenity::all::{CommandInteraction, ResolvedValue, CommandOptionType, UserId};
 use serenity::builder::{CreateCommand, CreateCommandOption};
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
-use crate::commands::business::quote::{Quote, QUOTE_DB_NAME};
+use crate::commands::business::quote::{add_quote_to_collection, Quote};
 
 use crate::utils::discord_message::respond_to_interaction;
-use crate::utils::mongo::get_mongo_client;
 use crate::utils::string_utils::capitalize;
 
 const VEXRAX_USER_ID: u64 = 188313190214533120;
@@ -52,29 +49,9 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     };
 
     respond_to_interaction(&ctx, &command, &format!("Adding the quote: `{}` -{} {}", quote_to_add.quote, quote_to_add.author, quote_to_add.year).to_string()).await;
-
-    let database_result = get_mongo_client().await;
-
-    match database_result {
-        Ok(db) =>  {
-            add_quote_to_collection(db, quote_to_add).await
-        },
-        Err(err) => {
-            log::error!("Error: something went wrong when trying to add a quote to the DB: {}", err);
-        }
-    }
+    add_quote_to_collection(quote_to_add).await;
 }
 
-async fn add_quote_to_collection(db: Database, quote_to_add: Quote) {
-    match db.collection::<Quote>(QUOTE_DB_NAME).insert_one(quote_to_add.clone(), None).await.ok() {
-        Some(result) => {
-            log::info!("Added quote [{}] to the DB: id: {}", quote_to_add.quote.clone(), result.inserted_id)
-        }
-        None => {
-            log::error!("Something went wrong trying to add the quote []")
-        }
-    }
-}
 
 pub fn register() -> CreateCommand {
     CreateCommand::new("quoteadd")

@@ -1,24 +1,19 @@
-use mongodb::bson::Document;
 use rand::seq::SliceRandom;
-use futures::stream::TryStreamExt;
-use mongodb::bson::doc;
 use serenity::model::prelude::ChannelId;
 
 use serenity::all::{CommandInteraction, ResolvedValue, CommandOptionType, CreateEmbedFooter, Color};
 use serenity::builder::{CreateCommand, CreateCommandOption, CreateMessage, CreateEmbed};
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
-use crate::commands::business::quote::{Quote, QUOTE_DB_NAME};
+use crate::commands::business::quote::{get_quote_from, get_random_quote, Quote};
 
 use crate::utils::discord_message::respond_to_interaction;
-use crate::utils::mongo::get_mongo_client;
-use crate::utils::string_utils::capitalize;
 
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     if let Some(ResolvedOption { value: ResolvedValue::String(name), .. }) = options.first() {
-        get_quote_from(&name.to_string().clone(), ctx, command).await;
+        send_quote_from_person_in_channel(&name.to_string().clone(), ctx, command).await;
     } else {
-        get_random_quote(ctx, command).await;
+        send_random_quote_in_channel(ctx, command).await;
     }
 }
 pub fn register() -> CreateCommand {
@@ -27,25 +22,15 @@ pub fn register() -> CreateCommand {
             .required(false),
     )
 }
-async fn get_quote_from(name: &String, ctx: &Context, command: &CommandInteraction) {
+async fn send_quote_from_person_in_channel(name: &String, ctx: &Context, command: &CommandInteraction) {
     respond_to_interaction(&ctx, &command, &format!("getting a quote from {}...", name).to_string()).await;
-
-    let all_quotes = get_quotes(doc! { "author": capitalize(name) }).await.unwrap_or_else(|err| {
-        log::error!("Error occurred while getting quote for {} err: {}", name, err);
-        vec![]
-    });
-
+    let all_quotes = get_quote_from(name).await;
     send_quote_in_channel(ctx, &command.channel_id, all_quotes).await
 }
 
-async fn get_random_quote(ctx: &Context, command: &CommandInteraction) {
+async fn send_random_quote_in_channel(ctx: &Context, command: &CommandInteraction) {
     respond_to_interaction(&ctx, &command, &"Getting a random quote. . .".to_string()).await;
-
-    let all_quotes: Vec<Quote> = get_quotes(doc! {  }).await.unwrap_or_else(|err| {
-        log::error!("Error occurred while getting random quote {}", err);
-        vec![]
-    });
-
+    let all_quotes: Vec<Quote> = get_random_quote().await;
     send_quote_in_channel(ctx, &command.channel_id, all_quotes).await
 }
 
@@ -67,12 +52,5 @@ async fn send_quote_in_channel(ctx: &Context, channel_id: &ChannelId, quotes: Ve
             let _msg = channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
         }
     }
-}
-
-async fn get_quotes(filter: Document) -> mongodb::error::Result<Vec<Quote>> {
-    let database = get_mongo_client().await?;
-    let typed_collection = database.collection::<Quote>(QUOTE_DB_NAME);
-    let cursor = typed_collection.find(filter, None).await?;
-    Ok(cursor.try_collect().await.unwrap_or_else(|_| vec![]))
 }
 
