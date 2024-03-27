@@ -5,9 +5,9 @@ use serenity::model::application::ResolvedOption;
 use crate::commands::business::quote::{add_quote_to_collection, Quote};
 
 use crate::utils::discord_message::respond_to_interaction;
+use crate::utils::skynet_constants::VEXRAX_USER_ID;
 use crate::utils::string_utils::capitalize;
 
-const VEXRAX_USER_ID: u64 = 188313190214533120;
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     let quote: String;
     let author: String;
