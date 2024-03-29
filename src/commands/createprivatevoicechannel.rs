@@ -90,8 +90,8 @@ pub async fn cleanup_unused_channels(ctx: &Context, guild_id: GuildId) {
     // I cant chain a foreach here because it needs to be async and rust doesnt support async in closures in the stable version yet.
     for voice_channel_to_delete in channels_to_delete {
         match voice_channel_to_delete.delete(&ctx.http).await {
-            Ok(deleted_channel) => println!("Deleted channel with name {}", deleted_channel.name),
-            Err(err) => println!("There was a error while trying to delete a channel with name {}, err {}", voice_channel_to_delete.name, err)
+            Ok(deleted_channel) => log::info!("Deleted channel with name {}", deleted_channel.name),
+            Err(err) => log::error!("There was a error while trying to delete a channel with name {}, err {}", voice_channel_to_delete.name, err)
         }
     }
 }
