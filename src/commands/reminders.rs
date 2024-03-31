@@ -137,7 +137,7 @@ pub fn register() -> CreateCommand {
 pub async fn check_for_reminders(ctx: &Context) {
 
     let all_reminders: Vec<Reminder> = get_reminders_from_collection(doc! {  }).await.unwrap_or_else(|err| {
-        eprintln!("Error occurred while getting reminders {}", err);
+        log::error!("Error occurred while getting reminders {}", err);
         vec![]
     });
 
@@ -149,7 +149,7 @@ pub async fn check_for_reminders(ctx: &Context) {
         let channel = match ctx.http.get_channel(ChannelId::from(reminder.channel_id)).await {
             Ok(channel) => channel,
             Err(err) => {
-                eprintln!("Could not find the channel {}, err: {}", reminder.channel_id, err);
+                log::error!("Could not find the channel {}, err: {}", reminder.channel_id, err);
                 delete_reminder_from_collection(reminder).await;
                 continue;
             }
@@ -158,7 +158,7 @@ pub async fn check_for_reminders(ctx: &Context) {
         let user= match ctx.http.get_user(UserId::from(reminder.user_id)).await {
             Ok(user) => user,
             Err(err) => {
-                eprintln!("Could not find the user {}, err: {}", reminder.user_id, err);
+                log::error!("Could not find the user {}, err: {}", reminder.user_id, err);
                 delete_reminder_from_collection(reminder).await;
                 continue;
             }
