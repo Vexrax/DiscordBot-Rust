@@ -1519,9 +1519,9 @@ dependencies = [
 
 [[package]]
 name = "riven"
-version = "2.34.1"
+version = "2.38.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9fb04a1aea7c4449b237564a326a60625344d3eebcd12f2188ea8fda676fb9f5"
+checksum = "13c2c4a47a378d387c13b5763e515c7cf1e2c348d6ddb3ed98a91b607934bc4f"
 dependencies = [
  "futures",
  "gloo-timers",
@@ -1533,6 +1533,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_repr",
+ "slab",
  "strum",
  "strum_macros",
  "tokio",

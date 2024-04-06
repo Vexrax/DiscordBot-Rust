@@ -12,7 +12,7 @@ rand = "0.8"
 mongodb = "2.3.1"
 futures = "0.3"
 serde = { version = "1.0", features = ["derive"] }
-riven = "2.34.1"
+riven = "2.38.2"
 chrono = "0.4.31"
 time = "0.3.30"
 queues = "1.0.2"
