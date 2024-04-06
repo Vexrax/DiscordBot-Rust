@@ -5,7 +5,6 @@ WORKDIR /usr/src/DiscordBot
 COPY . .
 
 RUN apt update
-RUN apt upgrade
 RUN apt-get update && apt install -y openssl
 RUN cargo build --release
 
