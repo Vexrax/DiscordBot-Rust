@@ -67,9 +67,9 @@ pub async fn get_current_match(summoner: &Summoner) -> Option<CurrentGameInfo> {
     }
 }
 
-pub async fn get_league_entries(summoner_id: &String) -> Option<Vec<LeagueEntry>> {
+pub async fn get_league_entries(encrypted_summoner_id: &String) -> Option<Vec<LeagueEntry>> {
     let riot_api = get_riot_api();
-    match riot_api.league_v4().get_league_entries_for_summoner(PLATFORM, &summoner_id).await {
+    match riot_api.league_v4().get_league_entries_for_summoner(PLATFORM, &encrypted_summoner_id).await {
         Ok(league_entires) => return Some(league_entires),
         Err(err) =>  {
             log::error!("Riot api errored: {}", err);
