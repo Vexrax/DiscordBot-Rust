@@ -56,9 +56,9 @@ pub async fn get_match_ids(puuid: &str, queue: Queue, start_time_epoch_seconds: 
     }
 }
 
-pub async fn get_current_match(summoner: &Summoner) -> Option<CurrentGameInfo> {
+pub async fn get_current_match(puuid: &String) -> Option<CurrentGameInfo> {
     let riot_api = get_riot_api();
-    match riot_api.spectator_v5().get_current_game_info_by_puuid(PLATFORM, &summoner.puuid).await {
+    match riot_api.spectator_v5().get_current_game_info_by_puuid(PLATFORM, &puuid).await {
         Ok(current_match) => return current_match,
         Err(err) =>  {
             log::error!("Riot api errored: {}", err);

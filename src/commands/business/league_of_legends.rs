@@ -1,10 +1,12 @@
 use riven::consts::{Queue, QueueType};
+use riven::models::account_v1::Account;
 use riven::models::league_v4::LeagueEntry;
 use riven::models::match_v5::Match;
 use riven::models::spectator_v5::CurrentGameInfo;
 use riven::models::summoner_v4::Summoner;
 use crate::utils::riot_api::{get_current_match, get_league_entries, get_match_by_id, get_match_ids, get_riot_account, get_summoner};
 
+#[derive(Clone)]
 pub struct RiotId {
     pub(crate) name: String,
     pub(crate) tagline: String,
@@ -66,28 +68,19 @@ pub async fn get_rank_of_player(ecrypted_summoner_id: String, queue_type: QueueT
     None
 }
 
-pub async fn get_summoner_by_riot_id(riot_id: RiotId) -> Option<Summoner> {
-    let riot_account= match get_riot_account(&riot_id.name, &riot_id.tagline).await {
-        Some(riot_account) =>  riot_account,
-        None => return None
-    };
-
-    return get_summoner(&riot_account).await;
-}
-
-pub async fn get_summoners_by_riot_ids(riot_ids: Vec<RiotId>) -> Vec<Summoner> {
-    let mut summoners = vec![];
+pub async fn get_riot_accounts(riot_ids: Vec<RiotId>) -> Vec<Account> {
+    let mut accounts: Vec<Account> = vec![];
     for riot_id in riot_ids {
-        match get_summoner_by_riot_id(riot_id).await {
-            Some(summoner) => summoners.push(summoner),
+        match get_riot_account(&riot_id.name, &riot_id.tagline).await {
+            Some(account) => accounts.push(account),
             None => {}
         }
     }
-    return summoners;
+    return accounts;
 }
 
-pub async fn get_current_match_by_riot_summoner(riot_summoner: &Summoner) -> Option<CurrentGameInfo> {
-    return get_current_match(&riot_summoner).await;
+pub async fn get_current_match_by_riot_account(riot_account: &Account) -> Option<CurrentGameInfo> {
+    return get_current_match(&riot_account.puuid).await
 }
 
 pub fn get_riot_id_from_string(riot_id: &String) -> Option<RiotId> {
