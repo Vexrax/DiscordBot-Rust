@@ -13,3 +13,4 @@ pub mod messageleaderboard;
 pub mod scouting;
 mod business;
 pub(crate) mod createprivatevoicechannel;
+pub mod summarize;

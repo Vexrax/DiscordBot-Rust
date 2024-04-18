@@ -44,7 +44,8 @@ impl EventHandler for Handler {
                 commands::messageleaderboard::register(),
                 commands::scouting::register("scouting".to_string()),
                 commands::scouting::register("scouting_comp".to_string()),
-                commands::createprivatevoicechannel::register()
+                commands::createprivatevoicechannel::register(),
+                commands::summarize::register()
             ])
             .await;
 
@@ -124,6 +125,10 @@ impl EventHandler for Handler {
                 }
                 "createprivatevc" => {
                     commands::createprivatevoicechannel::run(&command.data.options(), &ctx, &command).await;
+                    None
+                },
+                "summarize" => {
+                    commands::summarize::run(&command.data.options(), &ctx, &command).await;
                     None
                 }
                 _ => Some("not implemented :(".to_string()),
