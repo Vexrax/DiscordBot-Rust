@@ -50,7 +50,7 @@ impl EventHandler for Handler {
             .await;
 
         // Keep this for debugging when adding new commands
-        // println!("I now have the following guild slash commands: {commands:#?}");
+        // println!("I now have the following guild slash commands: {_commands:#?}");
 
         // Do a check every 5 mins to async tasks. This is nonblocking
         task::spawn(async move{
