@@ -1,7 +1,7 @@
 use std::cmp;
 use std::time::{SystemTime, UNIX_EPOCH};
 use futures::StreamExt;
-use serenity::all::{ChannelId, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, ResolvedOption, ResolvedValue, User};
+use serenity::all::{ChannelId, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, Message, ResolvedOption, ResolvedValue, User};
 use crate::utils::discord_message::respond_to_interaction;
 use crate::utils::llama_api::call_llama;
 
@@ -48,32 +48,41 @@ pub fn register() -> CreateCommand {
 async fn create_chat_log(ctx: &Context, channel_id: ChannelId, unix_time_to_look_until: u64) -> Vec<ChatLog> {
     let mut chat_logs: Vec<ChatLog> = vec![];
     let mut messages = channel_id.messages_iter(&ctx).boxed();
-    let mut i = 0;
     while let Some(message_result) = messages.next().await {
         match message_result {
             Ok(message) => {
-
-                if i > 30 {
+                if message.timestamp.unix_timestamp() < unix_time_to_look_until as i64 {
                     break;
                 }
-
-
-                // if message.timestamp.unix_timestamp() < unix_time_to_look_until as i64 {
-                //     break;
-                // }
-
-                chat_logs.push(ChatLog {
-                    timestamp: message.timestamp.unix_timestamp(),
-                    author: message.author.clone().name,
-                    message: message.content.clone()
-                });
-
-                i += 1;
+                chat_logs.push(create_single_chat_log_from_message(message));
             },
             Err(_) => {},
         }
     }
     return chat_logs;
+}
+
+async fn create_chat_log_by_message_count(ctx: &Context, channel_id: ChannelId, amount_of_messages_to_find: i32) -> Vec<ChatLog>{
+    let mut chat_logs: Vec<ChatLog> = vec![];
+    let mut messages = channel_id.messages_iter(&ctx).boxed();
+    let mut i = 0;
+    while i < amount_of_messages_to_find {
+        let Some(message_result) = messages.next().await else { break };
+        match message_result {
+            Ok(message) => chat_logs.push(create_single_chat_log_from_message(message)),
+            Err(_) => {},
+        }
+    }
+
+    return chat_logs;
+}
+
+fn create_single_chat_log_from_message(message: Message) -> ChatLog {
+    return ChatLog {
+        timestamp: message.timestamp.unix_timestamp(),
+        author: message.author.clone().name,
+        message: message.content.clone()
+    };
 }
 
 fn get_unix_timestamp_to_look_for_messages_until(mins_in_past: i64) -> u64 {
