@@ -1,9 +1,10 @@
 use std::cmp;
 use std::time::{SystemTime, UNIX_EPOCH};
 use futures::StreamExt;
-use serenity::all::{ChannelId, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, Message, ResolvedOption, ResolvedValue, User};
+use serenity::all::{ChannelId, Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbedFooter, CreateMessage, Message, ResolvedOption, ResolvedValue, User};
+use serenity::builder::CreateEmbed;
 use crate::utils::discord_message::respond_to_interaction;
-use crate::utils::llama_api::call_llama;
+use crate::utils::llama_api::summarize_chat_logs_with_llama;
 
 struct ChatLog {
     author: String,
@@ -11,7 +12,7 @@ struct ChatLog {
     timestamp: i64,
 }
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
-    respond_to_interaction(ctx, command, &"This Command is WIP while i figure out LLMs".to_string().to_string()).await;
+    respond_to_interaction(ctx, command, &"(WIP) Trying to summarize the conversation, this may take a few minutes.".to_string().to_string()).await;
 
     let mut mins;
     if let Some(ResolvedOption { value: ResolvedValue::Integer(amount_option), .. }) = options.get(0) {
@@ -25,8 +26,8 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     // let channel = command.channel_id; // todo uncomment
     let channel = ChannelId::new(187317542283378688);
 
-    let chat_logs = create_chat_log(ctx, channel, timestamp).await;
-
+    // let chat_logs = create_chat_log(ctx, channel, timestamp).await; // todo uncomment
+    let chat_logs = create_chat_log_by_message_count(ctx, channel, 110).await;
 
     let mut log_string: String = "".to_string();
 
@@ -34,7 +35,15 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
         let log_line = format!("({}) [{}] <{}>", log.timestamp, log.author, log.message);
         log_string = format!("{} {}\n", log_string, log_line);
     }
-    call_llama(log_string).await;
+    match summarize_chat_logs_with_llama(log_string).await {
+        Some(summary) => {
+            let embed= build_embed(summary);
+            let _ = command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
+        },
+        None => {
+            println!("Todo")
+        }
+    }
 }
 
 pub fn register() -> CreateCommand {
@@ -72,6 +81,7 @@ async fn create_chat_log_by_message_count(ctx: &Context, channel_id: ChannelId, 
             Ok(message) => chat_logs.push(create_single_chat_log_from_message(message)),
             Err(_) => {},
         }
+        i+=1;
     }
 
     return chat_logs;
@@ -92,4 +102,12 @@ fn get_unix_timestamp_to_look_for_messages_until(mins_in_past: i64) -> u64 {
 
     let time_in_future_seconds = i64::from(mins_in_past) * 60;
     return current_time_seconds.as_secs().wrapping_add_signed(-1 * time_in_future_seconds);
+}
+
+fn build_embed(summary: String) -> CreateEmbed {
+    return CreateEmbed::new()
+        .title(&format!("Summary"))
+        .description(&format!("{}", summary))
+        .color(Color::TEAL)
+        .footer(CreateEmbedFooter::new( format!("Summary powered by LLAMA3")));
 }
