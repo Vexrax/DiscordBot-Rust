@@ -12,22 +12,23 @@ struct ChatLog {
     timestamp: i64,
 }
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
-    respond_to_interaction(ctx, command, &"(WIP) Trying to summarize the conversation, this may take a few minutes.".to_string().to_string()).await;
 
-    let mut mins;
+    let mut hours;
     if let Some(ResolvedOption { value: ResolvedValue::Integer(amount_option), .. }) = options.get(0) {
-        mins = cmp::max(*amount_option, 60);
+        hours = cmp::max(*amount_option, 24);
     } else {
         respond_to_interaction(&ctx, &command, &"Expected amount to be specified".to_string().to_string()).await;
         return;
     }
 
-    let timestamp: u64 = get_unix_timestamp_to_look_for_messages_until(mins);
+    let timestamp: u64 = get_unix_timestamp_to_look_for_messages_until(hours);
     // let channel = command.channel_id; // todo uncomment
     let channel = ChannelId::new(187317542283378688);
 
-    // let chat_logs = create_chat_log(ctx, channel, timestamp).await; // todo uncomment
-    let chat_logs = create_chat_log_by_message_count(ctx, channel, 110).await;
+    let chat_logs = create_chat_log(ctx, channel, timestamp).await; // todo uncomment
+    // let chat_logs = create_chat_log_by_message_count(ctx, channel, 200).await;
+
+    respond_to_interaction(ctx, command, &format!("Trying to summarize the conversation ({} messages), this may take a few minutes.", chat_logs.len())).await;
 
     let mut log_string: String = "".to_string();
 
@@ -49,7 +50,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
 pub fn register() -> CreateCommand {
     CreateCommand::new("summarize").description("Summarize the conversation in the channel")
         .add_option(
-            CreateCommandOption::new(CommandOptionType::Integer, "minutes_ago", "How many mins ago (max 60)")
+            CreateCommandOption::new(CommandOptionType::Integer, "hours_ago", "How many hours ago (max 24)")
                 .required(true),
         )
 }
@@ -95,12 +96,12 @@ fn create_single_chat_log_from_message(message: Message) -> ChatLog {
     };
 }
 
-fn get_unix_timestamp_to_look_for_messages_until(mins_in_past: i64) -> u64 {
+fn get_unix_timestamp_to_look_for_messages_until(hours_in_past: i64) -> u64 {
     let current_time_seconds = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards");
 
-    let time_in_future_seconds = i64::from(mins_in_past) * 60;
+    let time_in_future_seconds = i64::from(hours_in_past) * 60 * 60;
     return current_time_seconds.as_secs().wrapping_add_signed(-1 * time_in_future_seconds);
 }
 

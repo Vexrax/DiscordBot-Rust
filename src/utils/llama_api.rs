@@ -35,7 +35,7 @@ pub async fn summarize_chat_logs_with_llama(logs_as_string_with_newlines: String
     let source = format!("http://10.0.0.11:11434/api/chat");
     let msgs: Vec<LlamaMessage> = vec![
         LlamaMessage {
-            content: "Summarize chat logs that you are provided with, every newline begins with (unix timestamp) and then [author] then the <message>. Do not tell the user what you are doing, just provide the summary".to_string(),
+            content: "Summarize the discord chat logs that you are provided with, every newline begins with (unix timestamp) and then [author] then the <message>. Do not tell the user what you are doing, just provide the summary.".to_string(),
             role: "system".to_string(),
         },
         LlamaMessage {
@@ -49,13 +49,6 @@ pub async fn summarize_chat_logs_with_llama(logs_as_string_with_newlines: String
         messages: msgs,
         stream: false
     };
-
-    let serialized_api_call = match serde_json::to_string(&llama_api_call) {
-        Ok(str) => str,
-        Err(_) => return None,
-    };
-
-    println!("{}", serialized_api_call);
 
     let client = reqwest::Client::new();
     let res = client.post(source)
