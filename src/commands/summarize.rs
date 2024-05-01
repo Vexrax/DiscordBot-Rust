@@ -10,6 +10,8 @@ struct ChatLog {
     author: String,
     message: String,
     timestamp: i64,
+    message_id: u64,
+    replying_to_message_id: Option<u64>
 }
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
 
@@ -30,19 +32,18 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
 
     respond_to_interaction(ctx, command, &format!("Trying to summarize the conversation ({} messages), this may take a few minutes.", chat_logs.len())).await;
 
-    let mut log_string: String = "".to_string();
+    let log_string = create_chat_log_string(chat_logs);
 
-    for log in chat_logs {
-        let log_line = format!("({}) [{}] <{}>", log.timestamp, log.author, log.message);
-        log_string = format!("{} {}\n", log_string, log_line);
-    }
+    println!("{}", log_string);
+
     match summarize_chat_logs_with_llama(log_string).await {
         Some(summary) => {
             let embed= build_embed(summary);
             let _ = command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
         },
         None => {
-            println!("Todo")
+            let embed = CreateEmbed::new().title("ERROR").description(&"Something happened while trying to generate the summary".to_string());
+            let _msg = command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
         }
     }
 }
@@ -54,6 +55,20 @@ pub fn register() -> CreateCommand {
                 .required(true),
         )
 }
+fn create_chat_log_string(chat_logs: Vec<ChatLog>) -> String {
+    let mut log_string: String = "".to_string();
+
+    for log in chat_logs {
+        // TODO figure out how to intergrate this
+        let replying_to = match log.replying_to_message_id {
+            None => "NONE".to_string(),
+            Some(reply_id) => reply_id.to_string()
+        };
+        let log_line = format!("<[{}]> ({}) [{}] <{}>", log.message_id, log.timestamp, log.author, log.message);
+        log_string = format!("{} {}\n", log_string, log_line);
+    }
+    log_string
+}
 
 async fn create_chat_log(ctx: &Context, channel_id: ChannelId, unix_time_to_look_until: u64) -> Vec<ChatLog> {
     let mut chat_logs: Vec<ChatLog> = vec![];
@@ -64,6 +79,8 @@ async fn create_chat_log(ctx: &Context, channel_id: ChannelId, unix_time_to_look
                 if message.timestamp.unix_timestamp() < unix_time_to_look_until as i64 {
                     break;
                 }
+                // TODO skip messages by skynet
+                // TODO parse @s out and format them
                 chat_logs.push(create_single_chat_log_from_message(message));
             },
             Err(_) => {},
@@ -89,10 +106,19 @@ async fn create_chat_log_by_message_count(ctx: &Context, channel_id: ChannelId, 
 }
 
 fn create_single_chat_log_from_message(message: Message) -> ChatLog {
+    let reference_message_id_optional = match message.referenced_message {
+        None => None,
+        Some(message) => {
+            Some(message.id.get())
+        }
+    };
+
     return ChatLog {
         timestamp: message.timestamp.unix_timestamp(),
         author: message.author.clone().name,
-        message: message.content.clone()
+        message: message.content.clone(), // TODO need to parse out the @s in the message to an author id
+        message_id: message.id.get(),
+        replying_to_message_id: reference_message_id_optional
     };
 }
 

@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::string::ToString;
 use reqwest::{Error, Response};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -29,13 +30,18 @@ struct LlamaResponse {
     eval_duration: u64
 }
 
+const PROMPT: &str = "Summarize the discord chat logs that you are provided with, every newline begins with <[message id]> and then the (unix timestamp) and then [author] then the <message>. \
+    The summary should reference the individuals in the conversation by name and what they are talking about with other individuals.\
+    Do not tell the user what you are doing, just provide the summary.";
+
 pub async fn summarize_chat_logs_with_llama(logs_as_string_with_newlines: String) -> Option<String> {
     let dev_api = "http://10.0.0.11"; // lmao
     let prod_api = "http://localhost"; // Lmao
     let source = format!("http://10.0.0.11:11434/api/chat");
+
     let msgs: Vec<LlamaMessage> = vec![
         LlamaMessage {
-            content: "Summarize the discord chat logs that you are provided with, every newline begins with (unix timestamp) and then [author] then the <message>. Do not tell the user what you are doing, just provide the summary.".to_string(),
+            content: PROMPT.to_string(),
             role: "system".to_string(),
         },
         LlamaMessage {
