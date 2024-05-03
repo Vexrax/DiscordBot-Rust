@@ -27,14 +27,12 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     // let channel = command.channel_id; // todo uncomment
     let channel = ChannelId::new(187317542283378688);
 
-    let chat_logs = create_chat_log(ctx, channel, timestamp).await; // todo uncomment
+    let chat_logs = create_chat_log(ctx, channel, timestamp).await;
     // let chat_logs = create_chat_log_by_message_count(ctx, channel, 200).await;
 
     respond_to_interaction(ctx, command, &format!("Trying to summarize the conversation ({} messages), this may take a few minutes.", chat_logs.len())).await;
 
     let log_string = create_chat_log_string(chat_logs);
-
-    println!("{}", log_string);
 
     match summarize_chat_logs_with_llama(log_string).await {
         Some(summary) => {
