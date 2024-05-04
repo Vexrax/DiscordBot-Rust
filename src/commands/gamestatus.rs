@@ -13,7 +13,7 @@ use riven::models::summoner_v4::Summoner;
 use crate::commands::business::league_of_legends::{get_current_match_by_riot_account, get_rank_of_player, get_riot_accounts, get_riot_id_from_string, RiotId};
 
 use crate::utils::discord_message::respond_to_interaction;
-use crate::utils::riot_api::{get_profile_icon_url, get_summoner};
+use crate::api::riot_api::{get_profile_icon_url, get_summoner};
 
 #[derive(Clone)]
 struct MatchPlayer {

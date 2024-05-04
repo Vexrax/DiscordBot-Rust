@@ -4,7 +4,7 @@ use futures::StreamExt;
 use serenity::all::{ChannelId, Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbedFooter, CreateMessage, Message, ResolvedOption, ResolvedValue, User};
 use serenity::builder::CreateEmbed;
 use crate::utils::discord_message::respond_to_interaction;
-use crate::utils::llama_api::summarize_chat_logs_with_llama;
+use crate::api::llama_api::summarize_chat_logs_with_llama;
 use crate::utils::skynet_constants::SKYNET_USER_ID;
 
 struct ChatLog {

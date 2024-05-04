@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use serenity::all::{Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbed, CreateEmbedFooter, CreateMessage, ResolvedOption, ResolvedValue};
 use crate::commands::business::league_of_legends::{get_recent_match_data, get_riot_id_from_string};
 use crate::utils::discord_message::{respond_to_interaction, say_message_in_channel};
-use crate::utils::riot_api::{get_profile_icon_url, get_riot_account, get_summoner};
+use crate::api::riot_api::{get_profile_icon_url, get_riot_account, get_summoner};
 use std::time::{SystemTime, Duration};
 use riven::consts::{Champion, Queue};
 use riven::models::account_v1::Account;

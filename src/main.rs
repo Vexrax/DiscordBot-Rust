@@ -1,5 +1,6 @@
 mod commands;
 mod utils;
+mod api;
 
 use std::env;
 use std::time::Duration;
