@@ -1,10 +1,12 @@
 use std::cmp;
 use std::time::{SystemTime, UNIX_EPOCH};
 use futures::StreamExt;
+use serde::Serialize;
 use serenity::all::{ChannelId, Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbedFooter, CreateMessage, Message, ResolvedOption, ResolvedValue, User};
 use serenity::builder::CreateEmbed;
 use crate::utils::discord_message::respond_to_interaction;
 use crate::utils::llama_api::summarize_chat_logs_with_llama;
+use crate::utils::skynet_constants::SKYNET_USER_ID;
 
 struct ChatLog {
     author: String,
@@ -77,7 +79,9 @@ async fn create_chat_log(ctx: &Context, channel_id: ChannelId, unix_time_to_look
                 if message.timestamp.unix_timestamp() < unix_time_to_look_until as i64 {
                     break;
                 }
-                // TODO skip messages by skynet
+                if message.author.id == SKYNET_USER_ID {
+                    continue;
+                }
                 // TODO parse @s out and format them
                 chat_logs.push(create_single_chat_log_from_message(message));
             },
