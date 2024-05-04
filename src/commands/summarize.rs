@@ -14,32 +14,35 @@ struct ChatLog {
     replying_to_message_id: Option<u64>
 }
 
-const MAX_HOURS_AGO: i64 = 48;
+const MAX_HOURS_AGO: i64 = 24 * 3;
+const MAX_MESSAGES: i64 = 200;
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
-
-    let mut hours;
-    if let Some(ResolvedOption { value: ResolvedValue::Integer(amount_option), .. }) = options.get(0) {
-        hours = *amount_option;
-    } else {
-        respond_to_interaction(&ctx, &command, &"Expected amount to be specified".to_string().to_string()).await;
-        return;
-    }
-
-    let timestamp: u64 = get_unix_timestamp_to_look_for_messages_until(hours);
     // let channel = command.channel_id; // todo uncomment
     let channel = ChannelId::new(187317542283378688);
 
-    let chat_logs = create_chat_log(ctx, channel, timestamp).await;
-    // let chat_logs = create_chat_log_by_message_count(ctx, channel, 200).await;
-    let channel_name = channel.name(&ctx.http).await.unwrap_or_else(|_| "the channel".to_string());
+    let chat_logs;
+    if let Some(ResolvedOption { value: ResolvedValue::Integer(amount_option), .. }) = options.get(0) {
+        let hours = *amount_option;
+        let timestamp: u64 = get_unix_timestamp_to_look_for_messages_until(hours);
+        chat_logs = create_chat_log(ctx, channel, timestamp).await;
+    }
+    else if let Some(ResolvedOption { value: ResolvedValue::Integer(max_messages_option), .. }) = options.get(1) {
+        let amount_messages_to_look_at = *max_messages_option;
+        chat_logs = create_chat_log_by_message_count(ctx, channel, amount_messages_to_look_at).await;
+    }
+    else {
+        respond_to_interaction(&ctx, &command, &"Expected amount to be specified".to_string()).await;
+        return;
+    }
 
+    let channel_name = channel.name(&ctx.http).await.unwrap_or_else(|_| "the channel".to_string());
     respond_to_interaction(ctx, command, &format!("Trying to summarize the conversation in {} ({} messages), this may take a few minutes.", channel_name, chat_logs.len())).await;
 
-    let log_string = create_chat_log_string(chat_logs);
+    let formatted_log_string = create_chat_log_string(chat_logs);
 
-    match summarize_chat_logs_with_llama(log_string).await {
+    match summarize_chat_logs_with_llama(formatted_log_string).await {
         Some(summary) => {
-            let embed= build_embed(summary);
+            let embed= build_embed(summary, channel_name);
             let _ = command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
         },
         None => {
@@ -55,6 +58,11 @@ pub fn register() -> CreateCommand {
             CreateCommandOption::new(CommandOptionType::Integer, "hours_ago", format!("How many hours ago (max {})", MAX_HOURS_AGO))
                 .max_int_value(MAX_HOURS_AGO as u64)
                 .required(true),
+        )
+        .add_option(
+            CreateCommandOption::new(CommandOptionType::Integer, "messages", format!("How many messages to look at (max {})", MAX_MESSAGES))
+                .max_int_value(MAX_MESSAGES as u64)
+                .required(false),
         )
 }
 
@@ -87,13 +95,15 @@ async fn create_chat_log(ctx: &Context, channel_id: ChannelId, unix_time_to_look
                 }
                 chat_logs.push(create_single_chat_log_from_message(message));
             },
-            Err(_) => {},
+            Err(err) => {
+                log::error!("Error occured while trying to create a singular log line: {}", err);
+            },
         }
     }
     return chat_logs;
 }
 
-async fn create_chat_log_by_message_count(ctx: &Context, channel_id: ChannelId, amount_of_messages_to_find: i32) -> Vec<ChatLog>{
+async fn create_chat_log_by_message_count(ctx: &Context, channel_id: ChannelId, amount_of_messages_to_find: i64) -> Vec<ChatLog>{
     let mut chat_logs: Vec<ChatLog> = vec![];
     let mut messages = channel_id.messages_iter(&ctx).boxed();
     let mut i = 0;
@@ -101,7 +111,9 @@ async fn create_chat_log_by_message_count(ctx: &Context, channel_id: ChannelId, 
         let Some(message_result) = messages.next().await else { break };
         match message_result {
             Ok(message) => chat_logs.push(create_single_chat_log_from_message(message)),
-            Err(_) => {},
+            Err(err) => {
+                log::error!("An error occured while trying to make the chat log: {}", err)
+            },
         }
         i+=1;
     }
@@ -143,9 +155,9 @@ fn get_unix_timestamp_to_look_for_messages_until(hours_in_past: i64) -> u64 {
     return current_time_seconds.as_secs().wrapping_add_signed(-1 * time_in_future_seconds);
 }
 
-fn build_embed(summary: String) -> CreateEmbed {
+fn build_embed(summary: String, channel_name: String) -> CreateEmbed {
     return CreateEmbed::new()
-        .title(&format!("Summary"))
+        .title(&format!("Summary for {}", channel_name))
         .description(&format!("{}", summary))
         .color(Color::TEAL)
         .footer(CreateEmbedFooter::new( format!("Summary powered by LLAMA3")));
