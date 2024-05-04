@@ -1,7 +1,6 @@
 use std::cmp;
 use std::time::{SystemTime, UNIX_EPOCH};
 use futures::StreamExt;
-use serde::Serialize;
 use serenity::all::{ChannelId, Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbedFooter, CreateMessage, Message, ResolvedOption, ResolvedValue, User};
 use serenity::builder::CreateEmbed;
 use crate::utils::discord_message::respond_to_interaction;
@@ -115,10 +114,18 @@ fn create_single_chat_log_from_message(message: Message) -> ChatLog {
         }
     };
 
+    // INFO: Some messages contain @s, these are formated like <@111231231232>. This section
+    // parses those out and provides the authors name.
+    let mut message_content = message.content;
+    let mentions = message.mentions;
+    for user in mentions {
+        message_content = message_content.replace(format!("<@{}>", user.id).as_str(), &*user.name);
+    }
+
     return ChatLog {
         timestamp: message.timestamp.unix_timestamp(),
         author: message.author.clone().name,
-        message: message.content.clone(), // TODO need to parse out the @s in the message to an author id
+        message: message_content,
         message_id: message.id.get(),
         replying_to_message_id: reference_message_id_optional
     };
