@@ -3,6 +3,8 @@ use std::string::ToString;
 use reqwest::{Error, Response};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use crate::utils::skynet::get_env;
+use crate::utils::skynet_constants::Environment;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct LlamaMessage {
@@ -34,10 +36,17 @@ const PROMPT: &str = "Summarize the discord chat logs that you are provided with
     The summary should reference the individuals in the conversation by name and what they are talking about with other individuals.\
     Do not tell the user what you are doing, just provide the summary.";
 
+const LLAMA3_MODEL: &str = "llama3";
+
+pub fn get_host() -> String {
+    return match get_env() {
+        Environment::PROD => "http://localhost",
+        Environment::DEV => "http://10.0.0.11"
+    }.to_string()
+}
+
 pub async fn summarize_chat_logs_with_llama(logs_as_string_with_newlines: String) -> Option<String> {
-    let dev_api = "http://10.0.0.11"; // lmao
-    let prod_api = "http://localhost"; // Lmao
-    let source = format!("http://10.0.0.11:11434/api/chat");
+    let source = format!("{}:11434/api/chat", get_host());
 
     let msgs: Vec<LlamaMessage> = vec![
         LlamaMessage {
@@ -51,7 +60,7 @@ pub async fn summarize_chat_logs_with_llama(logs_as_string_with_newlines: String
     ];
 
     let llama_api_call = LLamaAPICall {
-        model: "llama3".to_string(),
+        model: LLAMA3_MODEL.to_string(),
         messages: msgs,
         stream: false
     };
@@ -65,7 +74,7 @@ pub async fn summarize_chat_logs_with_llama(logs_as_string_with_newlines: String
     let serialized_result = match res {
         Ok(okay_res) => okay_res.json::<LlamaResponse>().await,
         Err(err) => {
-            log::info!("Error occured while calling llama {}", err);
+            log::info!("Error occurred while calling llama {}", err);
             return None;
         }
     };
@@ -73,7 +82,7 @@ pub async fn summarize_chat_logs_with_llama(logs_as_string_with_newlines: String
     let llama_response = match serialized_result {
         Ok(ok) => ok,
         Err(err) => {
-            log::info!("Error occured while calling deserializing from llama {}", err);
+            log::info!("Error occurred while calling deserializing from llama {}", err);
             return None;
         }
     };

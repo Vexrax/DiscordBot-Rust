@@ -1,4 +1,3 @@
-use std::cmp;
 use std::time::{SystemTime, UNIX_EPOCH};
 use futures::StreamExt;
 use serenity::all::{ChannelId, Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbedFooter, CreateMessage, Message, ResolvedOption, ResolvedValue, User};
@@ -14,11 +13,13 @@ struct ChatLog {
     message_id: u64,
     replying_to_message_id: Option<u64>
 }
+
+const MAX_HOURS_AGO: i64 = 48;
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
 
     let mut hours;
     if let Some(ResolvedOption { value: ResolvedValue::Integer(amount_option), .. }) = options.get(0) {
-        hours = cmp::max(*amount_option, 24);
+        hours = *amount_option;
     } else {
         respond_to_interaction(&ctx, &command, &"Expected amount to be specified".to_string().to_string()).await;
         return;
@@ -30,8 +31,9 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
 
     let chat_logs = create_chat_log(ctx, channel, timestamp).await;
     // let chat_logs = create_chat_log_by_message_count(ctx, channel, 200).await;
+    let channel_name = channel.name(&ctx.http).await.unwrap_or_else(|_| "the channel".to_string());
 
-    respond_to_interaction(ctx, command, &format!("Trying to summarize the conversation ({} messages), this may take a few minutes.", chat_logs.len())).await;
+    respond_to_interaction(ctx, command, &format!("Trying to summarize the conversation in {} ({} messages), this may take a few minutes.", channel_name, chat_logs.len())).await;
 
     let log_string = create_chat_log_string(chat_logs);
 
@@ -50,10 +52,12 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
 pub fn register() -> CreateCommand {
     CreateCommand::new("summarize").description("Summarize the conversation in the channel")
         .add_option(
-            CreateCommandOption::new(CommandOptionType::Integer, "hours_ago", "How many hours ago (max 24)")
+            CreateCommandOption::new(CommandOptionType::Integer, "hours_ago", format!("How many hours ago (max {})", MAX_HOURS_AGO))
+                .max_int_value(MAX_HOURS_AGO as u64)
                 .required(true),
         )
 }
+
 fn create_chat_log_string(chat_logs: Vec<ChatLog>) -> String {
     let mut log_string: String = "".to_string();
 
@@ -81,7 +85,6 @@ async fn create_chat_log(ctx: &Context, channel_id: ChannelId, unix_time_to_look
                 if message.author.id == SKYNET_USER_ID {
                     continue;
                 }
-                // TODO parse @s out and format them
                 chat_logs.push(create_single_chat_log_from_message(message));
             },
             Err(_) => {},

@@ -1,4 +1,4 @@
-pub enum ENVIRONMENT {
+pub enum Environment {
     PROD,
     DEV,
 }
