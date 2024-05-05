@@ -1,6 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 use futures::StreamExt;
-use serenity::all::{ChannelId, Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbedFooter, CreateMessage, Message, ResolvedOption, ResolvedValue, User};
+use serenity::all::{ChannelId, Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbedFooter, CreateMessage, Message, ResolvedOption, ResolvedValue};
 use serenity::builder::CreateEmbed;
 use crate::utils::discord_message::respond_to_interaction;
 use crate::api::llama_api::summarize_chat_logs_with_llama;
