@@ -17,8 +17,13 @@ struct ChatLog {
 const MAX_HOURS_AGO: i64 = 24 * 3;
 const MAX_MESSAGES: i64 = 200;
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
-    // let channel = command.channel_id; // todo uncomment
-    let channel = ChannelId::new(187317542283378688);
+    let mut channel = command.channel_id;
+
+    // TODO: need to figure out a clean way to parse a command when the index before it might not exist
+    // TODO maybe we can refactor command data parsing using something more generic using the name field.
+    if let Some(ResolvedOption { value: ResolvedValue::Channel(channel_option), .. }) = options.get(2) {
+        channel = ChannelId::new(channel_option.id.get());
+    }
 
     let chat_logs;
     if let Some(ResolvedOption { value: ResolvedValue::Integer(amount_option), .. }) = options.get(0) {
@@ -46,7 +51,9 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
             let _ = command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
         },
         None => {
-            let embed = CreateEmbed::new().title("ERROR").description(&"Something happened while trying to generate the summary".to_string());
+            let embed = CreateEmbed::new()
+                .title("ERROR")
+                .description(&"Something happened while trying to generate the summary".to_string());
             let _msg = command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
         }
     }
@@ -64,17 +71,17 @@ pub fn register() -> CreateCommand {
                 .max_int_value(MAX_MESSAGES as u64)
                 .required(false),
         )
+        .add_option(
+            CreateCommandOption::new(CommandOptionType::Channel, "channel", "Which channel to summarize")
+                .required(false),
+        )
+
 }
 
 fn create_chat_log_string(chat_logs: Vec<ChatLog>) -> String {
     let mut log_string: String = "".to_string();
 
     for log in chat_logs {
-        // TODO figure out how to intergrate this
-        let replying_to = match log.replying_to_message_id {
-            None => "NONE".to_string(),
-            Some(reply_id) => reply_id.to_string()
-        };
         let log_line = format!("<[{}]> ({}) [{}] <{}>", log.message_id, log.timestamp, log.author, log.message);
         log_string = format!("{} {}\n", log_string, log_line);
     }
