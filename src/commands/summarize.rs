@@ -6,6 +6,12 @@ use crate::utils::discord_message::respond_to_interaction;
 use crate::api::llama_api::summarize_chat_logs_with_llama;
 use crate::utils::skynet_constants::SKYNET_USER_ID;
 
+struct CommandParams {
+    hours_ago: Option<i64>,
+    messages_ago: Option<i64>,
+    channel: Option<ChannelId>
+}
+
 struct ChatLog {
     author: String,
     message: String,
@@ -17,22 +23,18 @@ struct ChatLog {
 const MAX_HOURS_AGO: i64 = 24 * 3;
 const MAX_MESSAGES: i64 = 200;
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
-    let mut channel = command.channel_id;
 
-    // TODO: need to figure out a clean way to parse a command when the index before it might not exist
-    // TODO maybe we can refactor command data parsing using something more generic using the name field.
-    if let Some(ResolvedOption { value: ResolvedValue::Channel(channel_option), .. }) = options.get(2) {
-        channel = ChannelId::new(channel_option.id.get());
-    }
+    let command_params = get_command_params(options);
+    let channel = command_params.channel.unwrap_or_else(|| command.channel_id);
 
     let chat_logs;
-    if let Some(ResolvedOption { value: ResolvedValue::Integer(amount_option), .. }) = options.get(0) {
-        let hours = *amount_option;
+    if command_params.hours_ago.is_some() {
+        let hours = command_params.hours_ago.unwrap();
         let timestamp: u64 = get_unix_timestamp_to_look_for_messages_until(hours);
         chat_logs = create_chat_log(ctx, channel, timestamp).await;
     }
-    else if let Some(ResolvedOption { value: ResolvedValue::Integer(max_messages_option), .. }) = options.get(1) {
-        let amount_messages_to_look_at = *max_messages_option;
+    else if command_params.messages_ago.is_some() {
+        let amount_messages_to_look_at = command_params.messages_ago.unwrap();
         chat_logs = create_chat_log_by_message_count(ctx, channel, amount_messages_to_look_at).await;
     }
     else {
@@ -75,7 +77,33 @@ pub fn register() -> CreateCommand {
             CreateCommandOption::new(CommandOptionType::Channel, "channel", "Which channel to summarize")
                 .required(false),
         )
+}
 
+// TODO, need to make this expandable to all other commands
+pub fn get_command_params(options: &[ResolvedOption<'_>]) -> CommandParams {
+    let mut command_parms = CommandParams {
+        hours_ago: None,
+        messages_ago: None,
+        channel: None,
+    };
+    for resolved_option in options {
+        match resolved_option.value {
+            ResolvedValue::Integer(val, ..) => {
+                if resolved_option.name.eq("messages") {
+                    command_parms.messages_ago = Some(val)
+                }
+                if resolved_option.name.eq("hours_ago") {
+                    command_parms.hours_ago = Some(val)
+                }
+            },
+            ResolvedValue::Channel(channel, ..) => {
+                command_parms.channel = Some(channel.id);
+            },
+            _ => {}
+        }
+    }
+
+    return command_parms;
 }
 
 fn create_chat_log_string(chat_logs: Vec<ChatLog>) -> String {
