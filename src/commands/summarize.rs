@@ -4,8 +4,10 @@ use serenity::all::{ChannelId, Color, CommandInteraction, CommandOptionType, Con
 use serenity::builder::CreateEmbed;
 use crate::utils::discord_message::respond_to_interaction;
 use crate::api::llama_api::summarize_chat_logs_with_llama;
+use crate::utils::discord_message::say_message_in_channel;
 use crate::utils::skynet_constants::SKYNET_USER_ID;
 
+#[derive(Debug)]
 struct CommandParams {
     hours_ago: Option<i64>,
     messages_ago: Option<i64>,
@@ -23,18 +25,19 @@ struct ChatLog {
 const MAX_HOURS_AGO: i64 = 24 * 3;
 const MAX_MESSAGES: i64 = 200;
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
-
     let command_params = get_command_params(options);
     let channel = command_params.channel.unwrap_or_else(|| command.channel_id);
 
     let chat_logs;
     if command_params.hours_ago.is_some() {
         let hours = command_params.hours_ago.unwrap();
+        respond_to_interaction(ctx, command, &format!("Collecting messages for the past {} hours...", hours)).await;
         let timestamp: u64 = get_unix_timestamp_to_look_for_messages_until(hours);
         chat_logs = create_chat_log(ctx, channel, timestamp).await;
     }
     else if command_params.messages_ago.is_some() {
         let amount_messages_to_look_at = command_params.messages_ago.unwrap();
+        respond_to_interaction(ctx, command, &format!("Collecting the last {} messages...", amount_messages_to_look_at)).await;
         chat_logs = create_chat_log_by_message_count(ctx, channel, amount_messages_to_look_at).await;
     }
     else {
@@ -43,7 +46,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     }
 
     let channel_name = channel.name(&ctx.http).await.unwrap_or_else(|_| "the channel".to_string());
-    respond_to_interaction(ctx, command, &format!("Trying to summarize the conversation in {} ({} messages), this may take a few minutes.", channel_name, chat_logs.len())).await;
+    say_message_in_channel(command.channel_id, &ctx.http, &format!("Trying to summarize the conversation in {} ({} messages), this may take a few minutes.", channel_name, chat_logs.len())).await;
 
     let formatted_log_string = create_chat_log_string(chat_logs);
 
