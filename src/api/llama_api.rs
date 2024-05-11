@@ -5,11 +5,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use crate::utils::skynet::get_env;
 use crate::utils::skynet_constants::Environment;
+use std::str::FromStr;
 
 #[derive(Serialize, Deserialize, Debug)]
-struct LlamaMessage {
-    content: String,
-    role: String
+pub struct LlamaMessage {
+    pub content: String,
+    pub role: String
 }
 
 #[derive(Serialize, Deserialize)]
@@ -32,10 +33,6 @@ struct LlamaResponse {
     eval_duration: u64
 }
 
-const PROMPT: &str = "Summarize the discord chat logs that you are provided with, every newline begins with <[message id]> and then the (unix timestamp) and then [author] then the <message>. \
-    The summary should reference the individuals in the conversation by name and what they are talking about with other individuals.\
-    Do not tell the user what you are doing, just provide the summary.";
-
 const LLAMA3_MODEL: &str = "llama3";
 
 pub fn get_host() -> String {
@@ -45,23 +42,12 @@ pub fn get_host() -> String {
     }.to_string()
 }
 
-pub async fn summarize_chat_logs_with_llama(logs_as_string_with_newlines: String) -> Option<String> {
+pub async fn call_llama3_api_await_response(messages: Vec<LlamaMessage>) -> Option<String> {
     let source = format!("{}:11434/api/chat", get_host());
-
-    let msgs: Vec<LlamaMessage> = vec![
-        LlamaMessage {
-            content: PROMPT.to_string(),
-            role: "system".to_string(),
-        },
-        LlamaMessage {
-            content: logs_as_string_with_newlines,
-            role: "user".to_string(),
-        },
-    ];
 
     let llama_api_call = LLamaAPICall {
         model: LLAMA3_MODEL.to_string(),
-        messages: msgs,
+        messages: messages,
         stream: false
     };
 

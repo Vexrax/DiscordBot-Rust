@@ -3,7 +3,8 @@ use futures::StreamExt;
 use serenity::all::{ChannelId, Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbedFooter, CreateMessage, Message, ResolvedOption, ResolvedValue};
 use serenity::builder::CreateEmbed;
 use crate::utils::discord_message::respond_to_interaction;
-use crate::api::llama_api::summarize_chat_logs_with_llama;
+use crate::api::llama_api::call_llama3_api_await_response;
+use crate::commands::business::llama::{ChatLog, get_summary_of_logs};
 use crate::utils::discord_message::say_message_in_channel;
 use crate::utils::skynet_constants::SKYNET_USER_ID;
 
@@ -12,14 +13,6 @@ struct CommandParams {
     hours_ago: Option<i64>,
     messages_ago: Option<i64>,
     channel: Option<ChannelId>
-}
-
-struct ChatLog {
-    author: String,
-    message: String,
-    timestamp: i64,
-    message_id: u64,
-    replying_to_message_id: Option<u64>
 }
 
 const MAX_HOURS_AGO: i64 = 24 * 3;
@@ -48,9 +41,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
     let channel_name = channel.name(&ctx.http).await.unwrap_or_else(|_| "the channel".to_string());
     say_message_in_channel(command.channel_id, &ctx.http, &format!("Trying to summarize the conversation in {} ({} messages), this may take a few minutes.", channel_name, chat_logs.len())).await;
 
-    let formatted_log_string = create_chat_log_string(chat_logs);
-
-    match summarize_chat_logs_with_llama(formatted_log_string).await {
+    match get_summary_of_logs(chat_logs).await {
         Some(summary) => {
             let embed= build_embed(summary, channel_name);
             let _ = command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
@@ -109,16 +100,6 @@ pub fn get_command_params(options: &[ResolvedOption<'_>]) -> CommandParams {
     return command_parms;
 }
 
-fn create_chat_log_string(chat_logs: Vec<ChatLog>) -> String {
-    let mut log_string: String = "".to_string();
-
-    for log in chat_logs {
-        let log_line = format!("<[{}]> ({}) [{}] <{}>", log.message_id, log.timestamp, log.author, log.message);
-        log_string = format!("{} {}\n", log_string, log_line);
-    }
-    log_string
-}
-
 async fn create_chat_log(ctx: &Context, channel_id: ChannelId, unix_time_to_look_until: u64) -> Vec<ChatLog> {
     let mut chat_logs: Vec<ChatLog> = vec![];
     let mut messages = channel_id.messages_iter(&ctx).boxed();
@@ -138,7 +119,7 @@ async fn create_chat_log(ctx: &Context, channel_id: ChannelId, unix_time_to_look
             },
         }
     }
-    return chat_logs;
+    return chat_logs.iter().rev().cloned().collect();
 }
 
 async fn create_chat_log_by_message_count(ctx: &Context, channel_id: ChannelId, amount_of_messages_to_find: i64) -> Vec<ChatLog>{
@@ -176,7 +157,7 @@ fn create_single_chat_log_from_message(message: Message) -> ChatLog {
     }
 
     return ChatLog {
-        timestamp: message.timestamp.unix_timestamp(),
+        unix_timestamp: message.timestamp.unix_timestamp(),
         author: message.author.clone().name,
         message: message_content,
         message_id: message.id.get(),
