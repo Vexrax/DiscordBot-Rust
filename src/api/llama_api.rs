@@ -40,7 +40,7 @@ const LLAMA3_MODEL: &str = "llama3";
 
 pub fn get_host() -> String {
     return match get_env() {
-        Environment::PROD => "http://localhost",
+        Environment::PROD => "http://10.0.0.11",
         Environment::DEV => "http://10.0.0.11"
     }.to_string()
 }
