@@ -74,7 +74,7 @@ pub async fn summarize_chat_logs_with_llama(logs_as_string_with_newlines: String
     let serialized_result = match res {
         Ok(okay_res) => okay_res.json::<LlamaResponse>().await,
         Err(err) => {
-            log::info!("Error occurred while calling llama {}", err);
+            log::error!("Error occurred while calling llama {}", err);
             return None;
         }
     };
@@ -82,7 +82,7 @@ pub async fn summarize_chat_logs_with_llama(logs_as_string_with_newlines: String
     let llama_response = match serialized_result {
         Ok(ok) => ok,
         Err(err) => {
-            log::info!("Error occurred while calling deserializing from llama {}", err);
+            log::error!("Error occurred while calling deserializing from llama {}", err);
             return None;
         }
     };
