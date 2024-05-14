@@ -10,11 +10,7 @@ pub struct ChatLog {
     pub replying_to_message_id: Option<u64>
 }
 
-const PROMPT: &str = "Summarize the discord chat logs that you are provided with, every newline begins with <[message id]> and then the (unix timestamp) and then [author] then the <message>. \
-    The summary should reference the individuals in the conversation by name and what they are talking about with other individuals.\
-    Do not tell the user what you are doing, just provide the summary.";
-
-const PROMPT_2: &str = "You have a set of Discord logs in the following format:\n
+const SUMMARY_PROMPT: &str = "You have a set of Discord logs in the following format:\n
 [2024-05-10 15:20:01] User1: Hey, what's up?\n
 [2024-05-10 15:20:05] User2: Not much, just chilling. How about you?\n
 [2024-05-10 15:20:12] User1: Same here. Did you see the latest update?\n
@@ -33,7 +29,7 @@ pub async fn get_summary_of_logs(chat_logs: Vec<ChatLog>) -> Option<String> {
 
     let msgs: Vec<LlamaMessage> = vec![
         LlamaMessage {
-            content: PROMPT_2.to_string(),
+            content: SUMMARY_PROMPT.to_string(),
             role: "system".to_string(),
         },
         LlamaMessage {
