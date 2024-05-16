@@ -56,7 +56,7 @@ pub async fn call_llama3_api_await_response(messages: Vec<LlamaMessage>) -> Opti
         messages: messages,
         stream: false,
         options: LLamaAPIOptions {
-            temperature: Some(1.8),
+            temperature: Some(1.0),
             seed: None,
         }
     };
