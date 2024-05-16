@@ -17,7 +17,13 @@ pub struct LlamaMessage {
 struct LLamaAPICall {
     model: String,
     messages: Vec<LlamaMessage>,
-    stream: bool
+    stream: bool,
+    options: LLamaAPIOptions
+}
+#[derive(Serialize, Deserialize)]
+struct LLamaAPIOptions {
+    seed: Option<i32>,
+    temperature: Option<f32>
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -48,7 +54,11 @@ pub async fn call_llama3_api_await_response(messages: Vec<LlamaMessage>) -> Opti
     let llama_api_call = LLamaAPICall {
         model: LLAMA3_MODEL.to_string(),
         messages: messages,
-        stream: false
+        stream: false,
+        options: LLamaAPIOptions {
+            temperature: Some(1.8),
+            seed: None,
+        }
     };
 
     let client = reqwest::Client::new();
@@ -64,6 +74,7 @@ pub async fn call_llama3_api_await_response(messages: Vec<LlamaMessage>) -> Opti
             return None;
         }
     };
+
 
     let llama_response = match serialized_result {
         Ok(ok) => ok,
