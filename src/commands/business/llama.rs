@@ -17,7 +17,8 @@ const SUMMARY_PROMPT: &str = "You have a set of Discord logs in the following fo
 [2024-05-10 15:20:18] User2: Yeah, it looks pretty cool. Have you tried it yet?\n
 [2024-05-10 15:20:25] User1: Not yet, planning to do it later.\n\
 Summarize the provided Discord chat logs. Reference the individuals by name in the conversation and describe what each person is talking about with others.\
-Do not tell the user what you are doing, just provide the summary.";
+Do not comment on the format of the logs.\
+Ensure that the summary does not tell the user that you are providing a summary";
 
 pub async fn get_summary_of_logs(chat_logs: Vec<ChatLog>) -> Option<String> {
     let mut log_string: String = "".to_string();
