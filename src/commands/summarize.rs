@@ -74,7 +74,7 @@ pub fn register() -> CreateCommand {
 }
 
 // TODO, need to make this expandable to all other commands
-pub fn get_command_params(options: &[ResolvedOption<'_>]) -> CommandParams {
+fn get_command_params(options: &[ResolvedOption<'_>]) -> CommandParams {
     let mut command_parms = CommandParams {
         hours_ago: None,
         messages_ago: None,

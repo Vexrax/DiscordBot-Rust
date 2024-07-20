@@ -19,7 +19,7 @@ pub fn register() -> CreateCommand {
     CreateCommand::new("halloffame").description("Gets the most reacted to messages of all time")
 }
 
-pub async fn get_most_reactions_in_channel(channel_id: ChannelId, ctx: &Context) -> HashMap<User, u32> {
+pub async fn get_most_reactions_in_channel(_channel_id: ChannelId, _ctx: &Context) -> HashMap<User, u32> {
     // let mut message_counts: HashMap<User, u32> = HashMap::new();
     //
     // let mut messages = channel_id.messages_iter(&ctx).boxed();

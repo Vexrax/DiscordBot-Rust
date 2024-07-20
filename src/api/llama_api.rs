@@ -1,11 +1,9 @@
-use std::collections::HashMap;
 use std::string::ToString;
-use reqwest::{Error, Response};
+use reqwest::{Response};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use crate::utils::skynet::get_env;
 use crate::utils::skynet_constants::Environment;
-use std::str::FromStr;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct LlamaMessage {
