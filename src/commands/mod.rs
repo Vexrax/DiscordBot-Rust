@@ -15,3 +15,4 @@ mod business;
 pub(crate) mod createprivatevoicechannel;
 pub mod summarize;
 pub mod halloffame;
+pub(crate) mod inhouse;
