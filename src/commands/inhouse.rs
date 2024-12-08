@@ -1,15 +1,26 @@
 use std::cmp::min;
 use std::future::Future;
+use mongodb::results::InsertOneResult;
 use riven::models::account_v1::Account;
 use serde::{Deserialize, Serialize};
 use serenity::all::{CommandInteraction, CommandOptionType, CreateCommandOption, CreateEmbed, CreateMessage, ResolvedValue};
 use serenity::builder::{CreateCommand};
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
-use crate::commands::business::embed::get_embed_for_current_match;
+use crate::commands::business::embed::{get_db_add_failure_embed, get_embed_for_current_match};
 use crate::utils::discord_message::respond_to_interaction;
 use crate::commands::business::league_of_legends::{get_current_match_by_riot_account, get_rank_of_player, get_riot_accounts, get_riot_id_from_string, RiotId};
 use crate::commands::inhouse::SubCommand::{REGISTER, STATS};
+use crate::utils::mongo::get_mongo_client;
+
+const INHOUSE_MATCH_DB_NAME: &str = "InHouses";
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct InhouseMatch {
+    match_id: i64,
+    added_by: String,
+}
+
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 enum SubCommand {
@@ -100,7 +111,7 @@ async fn register_game(full_name_and_tagline: &String) -> Option<CreateEmbed> {
         panic!()
     });
 
-    let riot_accounts =   get_riot_accounts(vec![riot_id]).await;
+    let riot_accounts =   get_riot_accounts(vec![riot_id.clone()]).await;
     let riot_account= match riot_accounts.get(0) {
         Some(first_value) => first_value,
         None => return None,
@@ -113,7 +124,30 @@ async fn register_game(full_name_and_tagline: &String) -> Option<CreateEmbed> {
         None => return None,
     }
 
-    // TODO add the match to the DB
 
-    Some(get_embed_for_current_match(&current_match, &riot_account))
+    let result = add_match_to_collection(InhouseMatch {
+        match_id: current_match.game_id,
+        added_by: format!("{}#{}", riot_id.name, riot_id.tagline)
+    }).await;
+
+    match result {
+        None => Some(get_db_add_failure_embed(INHOUSE_MATCH_DB_NAME.to_string(), format!("failed to add {}", current_match.game_id))),
+        Some(result) => Some(get_embed_for_current_match(&current_match, &riot_account).await.expect("TODO panic"))
+    }
+
+}
+
+async fn add_match_to_collection(inhouse_match:  InhouseMatch) -> Option<InsertOneResult> {
+    let database_result = get_mongo_client().await;
+
+    match database_result {
+        Ok(db) => {
+            let collection = db.collection::<InhouseMatch>(INHOUSE_MATCH_DB_NAME);
+            collection.insert_one(inhouse_match, None).await.ok()
+        },
+        Err(err) => {
+            log::error!("Error: something went wrong when trying to add a reminder to the DB: {}", err);
+            None
+        }
+    }
 }

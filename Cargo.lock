@@ -1068,6 +1068,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f665ee40bc4a3c5590afb1e9677db74a508659dfd71e126420da8274909a0167"
 
 [[package]]
+name = "memo-map"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38d1115007560874e373613744c6fba374c17688327a71c1476d1a5954cc857b"
+
+[[package]]
 name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1519,13 +1525,14 @@ dependencies = [
 
 [[package]]
 name = "riven"
-version = "2.40.0"
+version = "2.57.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "669eb02bc70fc9029be3a1510d7494f65ea73a826b9922fc2a07c2e8e8e9366e"
+checksum = "a7566be753b56e3b1536f17c5ff4564eaa2e7a533d0074d5103b05984c26c292"
 dependencies = [
  "futures",
  "gloo-timers",
  "log",
+ "memo-map",
  "num_enum",
  "parking_lot",
  "reqwest",

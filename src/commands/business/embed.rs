@@ -21,6 +21,13 @@ struct MatchPlayer {
     riot_id: RiotId,
 }
 
+pub fn get_db_add_failure_embed(collection_name: String, failure_message: String) -> CreateEmbed {
+    CreateEmbed::new()
+        .title(format!("there was a failure when trying to add to [{}]", collection_name))
+        .description(format!("{}", failure_message))
+        .color(Color::DARK_RED)
+}
+
 pub async fn get_embed_for_current_match(current_match: &CurrentGameInfo, riot_account: &Account) -> Option<CreateEmbed> {
     let mut match_players: Vec<MatchPlayer> = vec![];
     for participant in current_match.clone().participants {
