@@ -112,20 +112,16 @@ pub fn get_riot_id_from_string(riot_id: &String) -> Option<RiotId> {
 pub async fn get_league_matches(match_ids: Vec<i64>) -> Vec<Match> {
     let mut matches = vec![];
     for match_id in match_ids {
-        let full_league_match = get_full_league_match_from_db(match_id).await;
+        let na_match_id = format!("NA1_{}", match_id);
+        let full_league_match = get_full_league_match_from_db(na_match_id.clone()).await;
         match full_league_match {
             None => {
-                println!("Didnt find match in DB fetching from riot");
-                let na_match_id = format!("NA1_{}", match_id);
                 match get_matches(vec![na_match_id]).await.first() {
                     Some(league_match) => {
-                        println!("Here1");
                         add_league_match_to_db(league_match.clone()).await;
                         matches.push(league_match.clone());
                     }
-                    None => {
-                        println!("Here2");
-                    }
+                    None => {}
                 }
             }
             Some(full_match) => matches.push(full_match)
@@ -152,7 +148,7 @@ async fn add_league_match_to_db(league_match: Match) -> Option<InsertOneResult> 
     }
 }
 
-async fn get_full_league_match_from_db(match_id: i64) -> Option<Match> { // TODO make this an option
+async fn get_full_league_match_from_db(match_id: String) -> Option<Match> { // TODO make this an option
     let database = match get_mongo_client().await {
         Ok(db) => db,
         Err(err) => {

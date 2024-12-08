@@ -29,38 +29,38 @@ struct InhouseMatch {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct PlayerStat {
-    games: i64,
-    wins: i64,
-    losses: i64,
-    champions: HashSet<i64>, // Use the champion ids
+    games: i32,
+    wins: i32,
+    losses: i32,
+    champions: HashSet<i16>, // Use the champion ids
 
-    total_damage: i64,
-    total_game_time: i64,
-    total_gold: i64,
-    total_damage_taken: i64,
-    total_solo_kills: i64,
-    total_kills: i64,
-    total_deaths: i64,
-    total_assists: i64,
-    total_cs: i64,
-    total_vs: i64,
+    total_damage: i32,
+    total_game_time: i32,
+    total_gold: i32,
+    total_damage_taken: i32,
+    total_solo_kills: i32,
+    total_kills: i32,
+    total_deaths: i32,
+    total_assists: i32,
+    total_cs: i32,
+    total_vs: i32,
 
-    total_turrets: i64,
-    total_plates: i64,
-    total_grubs: i64,
-    total_dragons: i64,
-    total_barons: i64,
+    total_turrets: i32,
+    total_plates: i32,
+    total_grubs: i32,
+    total_dragons: i32,
+    total_barons: i32,
 
-    total_team_damage: i64,
-    total_team_game_time: i64,
-    total_team_gold: i64,
-    total_team_damage_taken: i64,
-    total_team_solo_kills: i64,
-    total_team_kills: i64,
-    total_team_deaths: i64,
-    total_team_assists: i64,
-    total_team_cs: i64,
-    total_team_vs: i64,
+    total_team_damage: i32,
+    total_team_game_time: i32,
+    total_team_gold: i32,
+    total_team_damage_taken: i32,
+    total_team_solo_kills: i32,
+    total_team_kills: i32,
+    total_team_deaths: i32,
+    total_team_assists: i32,
+    total_team_cs: i32,
+    total_team_vs: i32,
 
     // cs_diff_10: i64,
     // gold_diff_10: i64,
@@ -169,36 +169,36 @@ async fn full_refresh_stat() {
         match_ids.push(inhouse_match.match_id);
     }
 
-
     let league_matches = get_league_matches(match_ids).await;
-    let mut stats: HashMap<String, PlayerStat> = HashMap::new(); //puuid to stats
+    let mut stats: HashMap<String, PlayerStat> = HashMap::new(); // PUUID to PlayerStat
     for league_match in league_matches {
-        let winning_team_id;
-        if(league_match.info.teams.first().unwrap().team_id == Team::BLUE && league_match.info.teams.first().unwrap().win) {
-            winning_team_id = Team::BLUE;
+        let winning_team_id = if league_match.info.teams.first().unwrap().team_id == Team::BLUE
+            && league_match.info.teams.first().unwrap().win {
+            Team::BLUE
         } else {
-            winning_team_id = Team::RED;
-        }
+            Team::RED
+        };
 
-        let stats_to_add: Vec<PlayerStat> = vec![];
+        let mut stats_to_add: HashMap<String, PlayerStat> = HashMap::new(); // PUUID to PlayerStat
 
-        let total_team_damage: i64 = 0;
-        let total_team_game_time: i64 = 0;
-        let total_team_gold: i64 = 0;
-        let total_team_damage_taken: i64 = 0;
-        let total_team_solo_kills: i64 = 0;
-        let total_team_kills: i64 = 0;
-        let total_team_deaths: i64 = 0;
-        let total_team_assists: i64 = 0;
-        let total_team_cs: i64 = 0;
-        let total_team_vs: i64 = 0;
+        let mut total_team_damage: i32 = 0;
+        let mut total_team_game_time: i32 = 0;
+        let mut total_team_gold: i32 = 0;
+        let mut total_team_damage_taken: i32 = 0;
+        let mut total_team_solo_kills: i32 = 0;
+        let mut total_team_kills: i32 = 0;
+        let mut total_team_deaths: i32 = 0;
+        let mut total_team_assists: i32 = 0;
+        let mut total_team_cs: i32 = 0;
+        let mut total_team_vs: i32 = 0;
 
         for participant in league_match.info.participants {
-            let challenges =  participant.challenges.unwrap();
+            let challenges = participant.challenges.unwrap();
 
+            let puuid = participant.puuid.clone();
             let win = if participant.team_id == winning_team_id { 1 } else { 0 };
-            let loss = if participant.team_id != winning_team_id { 0 } else { 1 };
-            let games  = 1;
+            let loss = if participant.team_id != winning_team_id { 1 } else { 0 };
+            let games = 1;
             let champions = HashSet::from([participant.champion_id.unwrap().0]);
             let damage = participant.physical_damage_dealt_to_champions + participant.magic_damage_dealt_to_champions + participant.true_damage_dealt_to_champions;
             let game_time = participant.time_played;
@@ -208,27 +208,81 @@ async fn full_refresh_stat() {
             let kills = participant.kills;
             let deaths = participant.deaths;
             let assists = participant.assists;
-            let cs = participant.total_ally_jungle_minions_killed.unwrap_or_default() + participant.total_enemy_jungle_minions_killed.unwrap_or_default() + participant.total_minions_killed + participant.total_enemy_jungle_minions_killed.unwrap_or_default();
+            let cs = participant.total_ally_jungle_minions_killed.unwrap_or_default() + participant.total_enemy_jungle_minions_killed.unwrap_or_default() + participant.total_minions_killed;
             let vs = participant.vision_score;
 
-            let turrets = participant.turret_takedowns;
+            let turrets = participant.turret_takedowns.unwrap_or_default();
             let plates = challenges.turret_plates_taken.unwrap_or_default();
             let grubs = challenges.void_monster_kill.unwrap_or_default();
             let dragons = challenges.dragon_takedowns.unwrap_or_default();
             let barons = challenges.baron_takedowns.unwrap_or_default();
 
-            // TODO create the playerstat object here
-            // TODO update the team totals
-            // TODO add the object to the stats_to_add object
+            let player_stat = PlayerStat {
+                games,
+                wins: win,
+                losses: loss,
+                champions,
+                total_damage: damage,
+                total_game_time: game_time,
+                total_gold: gold,
+                total_damage_taken: damage_taken,
+                total_solo_kills: solo_kills,
+                total_kills: kills,
+                total_deaths: deaths,
+                total_assists: assists,
+                total_cs: cs,
+                total_vs: vs,
+                total_turrets: turrets,
+                total_plates: plates,
+                total_grubs: grubs,
+                total_dragons: dragons,
+                total_barons: barons,
+                total_team_damage,
+                total_team_game_time,
+                total_team_gold,
+                total_team_damage_taken,
+                total_team_solo_kills,
+                total_team_kills,
+                total_team_deaths,
+                total_team_assists,
+                total_team_cs,
+                total_team_vs,
+            };
+
+            // Update team totals
+            total_team_damage += damage;
+            total_team_game_time += game_time;
+            total_team_gold += gold;
+            total_team_damage_taken += damage_taken;
+            total_team_solo_kills += solo_kills;
+            total_team_kills += kills;
+            total_team_deaths += deaths;
+            total_team_assists += assists;
+            total_team_cs += cs;
+            total_team_vs += vs;
+
+            // Add the PlayerStat to the stats_to_add map
+            stats_to_add.insert(puuid, player_stat);
         }
 
-        // TODO add the team totals to all the playerstat objects
+        // Add team totals to all PlayerStat objects
+        for stat in stats_to_add.values_mut() {
+            stat.total_team_damage = total_team_damage;
+            stat.total_team_game_time = total_team_game_time;
+            stat.total_team_gold = total_team_gold;
+            stat.total_team_damage_taken = total_team_damage_taken;
+            stat.total_team_solo_kills = total_team_solo_kills;
+            stat.total_team_kills = total_team_kills;
+            stat.total_team_deaths = total_team_deaths;
+            stat.total_team_assists = total_team_assists;
+            stat.total_team_cs = total_team_cs;
+            stat.total_team_vs = total_team_vs;
+        }
 
-
-
-
-        println!("{:?}", league_match)
+        // Add stats_to_add to the main stats HashMap
+        stats.extend(stats_to_add);
     }
+    println!("{:?}", stats);
 }
 
 async fn register_game(full_name_and_tagline: &String) -> Option<CreateEmbed> {
