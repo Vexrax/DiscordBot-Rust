@@ -22,6 +22,17 @@ pub async fn get_riot_account(game_name: &str, tagline: &str) -> Option<Account>
     }
 }
 
+pub async fn get_riot_account_by_puuid(puuid: &str) -> Option<Account> {
+    let riot_api = get_riot_api();
+    match riot_api.account_v1().get_by_puuid(REGION, puuid).await {
+        Ok(riot_account_maybe) => Some(riot_account_maybe),
+        Err(err) =>  {
+            log::error!("Riot api errored, puuid {}, err {}", puuid, err);
+            None
+        }
+    }
+}
+
 pub async fn get_summoner(riot_account: &Account) -> Option<Summoner> {
     let riot_api = get_riot_api();
 

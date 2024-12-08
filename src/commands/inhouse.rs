@@ -1,15 +1,21 @@
 use std::cmp::min;
+use std::collections::{HashMap, HashSet};
 use std::future::Future;
+use futures::TryStreamExt;
+use mongodb::bson::{doc, Document};
 use mongodb::results::InsertOneResult;
+use riven::consts::Team;
 use riven::models::account_v1::Account;
+use riven::models::match_v5::Match;
 use serde::{Deserialize, Serialize};
-use serenity::all::{CommandInteraction, CommandOptionType, CreateCommandOption, CreateEmbed, CreateMessage, ResolvedValue};
+use serenity::all::{CommandInteraction, CommandOptionType, CreateCommandOption, CreateEmbed, CreateMessage, ResolvedValue, User};
 use serenity::builder::{CreateCommand};
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
+use crate::api::riot_api::get_riot_account_by_puuid;
 use crate::commands::business::embed::{get_db_add_failure_embed, get_embed_for_current_match};
 use crate::utils::discord_message::respond_to_interaction;
-use crate::commands::business::league_of_legends::{get_current_match_by_riot_account, get_rank_of_player, get_riot_accounts, get_riot_id_from_string, RiotId};
+use crate::commands::business::league_of_legends::{get_current_match_by_riot_account, get_league_matches, get_matches, get_rank_of_player, get_riot_accounts, get_riot_id_from_string, RiotId};
 use crate::commands::inhouse::SubCommand::{REGISTER, STATS};
 use crate::utils::mongo::get_mongo_client;
 
@@ -21,6 +27,48 @@ struct InhouseMatch {
     added_by: String,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct PlayerStat {
+    games: i64,
+    wins: i64,
+    losses: i64,
+    champions: HashSet<i64>, // Use the champion ids
+
+    total_damage: i64,
+    total_game_time: i64,
+    total_gold: i64,
+    total_damage_taken: i64,
+    total_solo_kills: i64,
+    total_kills: i64,
+    total_deaths: i64,
+    total_assists: i64,
+    total_cs: i64,
+    total_vs: i64,
+
+    total_turrets: i64,
+    total_plates: i64,
+    total_grubs: i64,
+    total_dragons: i64,
+    total_barons: i64,
+
+    total_team_damage: i64,
+    total_team_game_time: i64,
+    total_team_gold: i64,
+    total_team_damage_taken: i64,
+    total_team_solo_kills: i64,
+    total_team_kills: i64,
+    total_team_deaths: i64,
+    total_team_assists: i64,
+    total_team_cs: i64,
+    total_team_vs: i64,
+
+    // cs_diff_10: i64,
+    // gold_diff_10: i64,
+    // xp_diff_10: i64,
+    // cs_diff_20: i64,
+    // gold_diff_20: i64,
+    // xp_diff_20: i64,
+}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 enum SubCommand {
@@ -36,14 +84,15 @@ struct CommandOptions {
 
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     let command_options = get_command_options(options);
-    println!("{:?}", command_options);
 
     match command_options.sub_command_type {
         REGISTER => {
             let match_embed = register_game(&command_options.riot_id).await;
             command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(match_embed.unwrap())).await.expect("TODO: panic message");
         },
-        STATS => {}
+        STATS => {
+            full_refresh_stat().await;
+        }
     }
 }
 
@@ -105,6 +154,83 @@ fn get_command_options(options: &[ResolvedOption<'_>]) -> CommandOptions {
     }
 }
 
+
+async fn get_stat(full_name_and_tagline: &String) {
+    // Check if theres a new match available thats not in the cache
+    // run thru each players stats and add in the new values from the new match
+    // add the new match to the cache
+}
+
+async fn full_refresh_stat() {
+    let inhouse_matches = get_all_inhouse_matches().await;
+    let mut match_ids = vec![];
+    println!("{:?}", match_ids);
+    for inhouse_match in inhouse_matches {
+        match_ids.push(inhouse_match.match_id);
+    }
+
+
+    let league_matches = get_league_matches(match_ids).await;
+    let mut stats: HashMap<String, PlayerStat> = HashMap::new(); //puuid to stats
+    for league_match in league_matches {
+        let winning_team_id;
+        if(league_match.info.teams.first().unwrap().team_id == Team::BLUE && league_match.info.teams.first().unwrap().win) {
+            winning_team_id = Team::BLUE;
+        } else {
+            winning_team_id = Team::RED;
+        }
+
+        let stats_to_add: Vec<PlayerStat> = vec![];
+
+        let total_team_damage: i64 = 0;
+        let total_team_game_time: i64 = 0;
+        let total_team_gold: i64 = 0;
+        let total_team_damage_taken: i64 = 0;
+        let total_team_solo_kills: i64 = 0;
+        let total_team_kills: i64 = 0;
+        let total_team_deaths: i64 = 0;
+        let total_team_assists: i64 = 0;
+        let total_team_cs: i64 = 0;
+        let total_team_vs: i64 = 0;
+
+        for participant in league_match.info.participants {
+            let challenges =  participant.challenges.unwrap();
+
+            let win = if participant.team_id == winning_team_id { 1 } else { 0 };
+            let loss = if participant.team_id != winning_team_id { 0 } else { 1 };
+            let games  = 1;
+            let champions = HashSet::from([participant.champion_id.unwrap().0]);
+            let damage = participant.physical_damage_dealt_to_champions + participant.magic_damage_dealt_to_champions + participant.true_damage_dealt_to_champions;
+            let game_time = participant.time_played;
+            let gold = participant.gold_earned;
+            let damage_taken = participant.total_damage_taken;
+            let solo_kills = challenges.solo_kills.unwrap_or_default();
+            let kills = participant.kills;
+            let deaths = participant.deaths;
+            let assists = participant.assists;
+            let cs = participant.total_ally_jungle_minions_killed.unwrap_or_default() + participant.total_enemy_jungle_minions_killed.unwrap_or_default() + participant.total_minions_killed + participant.total_enemy_jungle_minions_killed.unwrap_or_default();
+            let vs = participant.vision_score;
+
+            let turrets = participant.turret_takedowns;
+            let plates = challenges.turret_plates_taken.unwrap_or_default();
+            let grubs = challenges.void_monster_kill.unwrap_or_default();
+            let dragons = challenges.dragon_takedowns.unwrap_or_default();
+            let barons = challenges.baron_takedowns.unwrap_or_default();
+
+            // TODO create the playerstat object here
+            // TODO update the team totals
+            // TODO add the object to the stats_to_add object
+        }
+
+        // TODO add the team totals to all the playerstat objects
+
+
+
+
+        println!("{:?}", league_match)
+    }
+}
+
 async fn register_game(full_name_and_tagline: &String) -> Option<CreateEmbed> {
     let riot_id: RiotId = get_riot_id_from_string(&full_name_and_tagline.to_string()).unwrap_or_else(|| {
         log::info!("Could not find the player {}", full_name_and_tagline);
@@ -125,7 +251,7 @@ async fn register_game(full_name_and_tagline: &String) -> Option<CreateEmbed> {
     }
 
 
-    let result = add_match_to_collection(InhouseMatch {
+    let result = add_inhouse_match_to_db(InhouseMatch {
         match_id: current_match.game_id,
         added_by: format!("{}#{}", riot_id.name, riot_id.tagline)
     }).await;
@@ -137,7 +263,7 @@ async fn register_game(full_name_and_tagline: &String) -> Option<CreateEmbed> {
 
 }
 
-async fn add_match_to_collection(inhouse_match:  InhouseMatch) -> Option<InsertOneResult> {
+async fn add_inhouse_match_to_db(inhouse_match:  InhouseMatch) -> Option<InsertOneResult> {
     let database_result = get_mongo_client().await;
 
     match database_result {
@@ -146,8 +272,29 @@ async fn add_match_to_collection(inhouse_match:  InhouseMatch) -> Option<InsertO
             collection.insert_one(inhouse_match, None).await.ok()
         },
         Err(err) => {
-            log::error!("Error: something went wrong when trying to add a reminder to the DB: {}", err);
+            log::error!("Error: something went wrong when trying to add a inhouse match to the DB: {}", err);
             None
         }
     }
+}
+
+async fn get_all_inhouse_matches() -> Vec<InhouseMatch> {
+    let database = match get_mongo_client().await {
+        Ok(db) => db,
+        Err(err) => {
+            log::error!("An error occurred while trying to get the db: {}", err);
+            return vec![];
+        }
+    };
+
+    let typed_collection = database.collection::<InhouseMatch>(INHOUSE_MATCH_DB_NAME);
+    let cursor = match typed_collection.find(doc! {  }, None).await {
+        Ok(quote_cursor) => quote_cursor,
+        Err(err) => {
+            log::error!("An error occurred while trying to find the matches: {}", err);
+            return vec![];
+        }
+    };
+
+    return cursor.try_collect().await.unwrap_or_else(|_| vec![]);
 }
