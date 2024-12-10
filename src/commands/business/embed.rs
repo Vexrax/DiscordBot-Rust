@@ -1,4 +1,4 @@
-
+use std::fmt::format;
 use std::string::ToString;
 use riven::models::league_v4::LeagueEntry;
 use serenity::all::{Color};
@@ -12,6 +12,7 @@ use riven::models::summoner_v4::Summoner;
 use crate::commands::business::league_of_legends::{get_rank_of_player, get_riot_id_from_string, RiotId};
 
 use crate::api::riot_api::{get_profile_icon_url, get_summoner};
+use crate::commands::business::inhouse::PlayerStat;
 
 #[derive(Clone)]
 struct MatchPlayer {
@@ -21,11 +22,15 @@ struct MatchPlayer {
     riot_id: RiotId,
 }
 
-pub fn get_db_add_failure_embed(collection_name: String, failure_message: String) -> CreateEmbed {
+pub fn get_failure_embed(title: String, description: String)  -> CreateEmbed {
     CreateEmbed::new()
-        .title(format!("there was a failure when trying to add to [{}]", collection_name))
-        .description(format!("{}", failure_message))
+        .title(format!("{}", title))
+        .description(format!("{}", description))
         .color(Color::DARK_RED)
+}
+
+pub fn get_db_add_failure_embed(collection_name: String, failure_message: String) -> CreateEmbed {
+    get_failure_embed(format!("there was a failure when trying to add to [{}]", collection_name), failure_message)
 }
 
 pub async fn get_embed_for_current_match(current_match: &CurrentGameInfo, riot_account: &Account) -> Option<CreateEmbed> {
@@ -49,6 +54,39 @@ pub async fn get_embed_for_current_match(current_match: &CurrentGameInfo, riot_a
     Some(build_embed_for_current_match(riot_account.clone(), main_player_summoner, match_players, current_match.game_length, current_match.game_id).await)
 }
 
+pub async fn get_player_stat_embed(riot_account: Account, player_stat: PlayerStat) -> CreateEmbed {
+    let mut fields: Vec<(String, String, bool)> =vec![];
+    let player_stat_data = player_stat.player_stat.clone();
+
+    fields.push(("Games Played".to_string(), player_stat_data.games.to_string(), true));
+    fields.push(("Win Rate".to_string(), build_rate_string(player_stat_data.wins as i64, player_stat_data.games as i64), true));
+    fields.push(("KDA".to_string(), format!("{}", (player_stat_data.total_kills + player_stat_data.total_assists) / player_stat_data.total_deaths), true));
+
+    fields.push(("Damage Per Gold".to_string(), "a".to_string(), true));
+    fields.push(("Damage Per Minute".to_string(), "b".to_string(), true));
+    fields.push(("Damage Share".to_string(), "c".to_string(), true));
+
+    fields.push(("Gold Per Min".to_string(), "a".to_string(), true));
+    fields.push(("Gold Share".to_string(), "b".to_string(), true));
+    fields.push(("Death Share".to_string(), "c".to_string(), true));
+
+    fields.push(("Average Grubs".to_string(), "a".to_string(), true));
+    fields.push(("Average Drags".to_string(), "b".to_string(), true));
+    fields.push(("Average Barons".to_string(), "c".to_string(), true));
+
+    fields.push(("Average Turret Plates".to_string(), "a".to_string(), true));
+    fields.push(("Average Solo Kills".to_string(), "b".to_string(), true));
+    fields.push(("Average Vision Score".to_string(), "c".to_string(), true));
+
+    let embed = CreateEmbed::new()
+        .title(format!("{}'s inhouse stats", riot_account.game_name.unwrap_or_default()))
+        .description(format!("Last Updated At: {}", player_stat.created_at))
+        .footer(CreateEmbedFooter::new(&format!("TODO")))
+        // .thumbnail(get_profile_icon_url(main_player_summoner.profile_icon_id).await)
+        .color(Color::DARK_ORANGE)
+        .fields(fields.into_iter());
+    return embed;
+}
 
 async fn build_embed_for_current_match(main_player_riot_account: Account, main_player_summoner: Summoner, match_players: Vec<MatchPlayer>, game_length_seconds: i64, game_id: i64) -> CreateEmbed {
     let mut fields: Vec<(String, String, bool)> =vec![];
@@ -96,6 +134,10 @@ fn build_rank_string(old: String, player: MatchPlayer) -> String {
     return format!("{}⠀⠀⠀⠀⠀⠀{}⠀⠀⠀\n", old, player.rank.as_ref()
         .map(|val| format!("{:?} {:?}", val.tier.unwrap_or_else(|| UNRANKED), val.rank.unwrap_or_else(|| IV)))
         .unwrap_or_else(|| "UNRANKED".to_string()));
+}
+
+fn build_rate_string(top: i64, bot: i64) -> String {
+    return format!("{}%", (top/bot) * 100);
 }
 
 fn build_compact_string_for_embed(match_players: Vec<MatchPlayer>, formatter_fn: &dyn Fn(String, MatchPlayer) -> String) -> String {

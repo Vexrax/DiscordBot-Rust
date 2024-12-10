@@ -4,10 +4,10 @@ use mongodb::bson::doc;
 use mongodb::results::{DeleteResult, InsertOneResult};
 use riven::consts::Team;
 use serde::{Deserialize, Serialize};
-use serenity::all::CreateEmbed;
-use crate::api::riot_api::get_riot_account_by_puuid;
-use crate::commands::business::embed::{get_db_add_failure_embed, get_embed_for_current_match};
-use crate::commands::business::league_of_legends::{get_current_match_by_riot_account, get_league_matches, get_riot_accounts, get_riot_id_from_string, RiotId};
+use serenity::all::{Color, CreateEmbed};
+use crate::api::riot_api::{get_riot_account, get_riot_account_by_puuid};
+use crate::commands::business::embed::{get_db_add_failure_embed, get_embed_for_current_match, get_failure_embed, get_player_stat_embed};
+use crate::commands::business::league_of_legends::{get_current_match_by_riot_account, get_league_matches, get_riot_accounts, get_riot_id_from_string, is_league_match_cached, RiotId};
 use crate::utils::mongo::get_mongo_client;
 
 const INHOUSE_MATCH_DB_NAME: &str = "InHouses";
@@ -21,45 +21,45 @@ pub struct InhouseMatch {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PlayerStat {
-    created_at: i64,
-    riot_full_tag: String,
-    player_stat: PlayerStatData
+    pub created_at: i64,
+    pub riot_full_tag: String,
+    pub player_stat: PlayerStatData
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PlayerStatData {
-    games: i32,
-    wins: i32,
-    losses: i32,
-    champions: HashSet<i16>, // Use the champion ids
+    pub games: i32,
+    pub wins: i32,
+    pub losses: i32,
+    pub champions: HashSet<i16>, // Use the champion ids
 
-    total_damage: i32,
-    total_game_time: i32,
-    total_gold: i32,
-    total_damage_taken: i32,
-    total_solo_kills: i32,
-    total_kills: i32,
-    total_deaths: i32,
-    total_assists: i32,
-    total_cs: i32,
-    total_vs: i32,
+    pub total_damage: i32,
+    pub total_game_time: i32,
+    pub total_gold: i32,
+    pub total_damage_taken: i32,
+    pub total_solo_kills: i32,
+    pub total_kills: i32,
+    pub total_deaths: i32,
+    pub total_assists: i32,
+    pub total_cs: i32,
+    pub total_vs: i32,
 
-    total_turrets: i32,
-    total_plates: i32,
-    total_grubs: i32,
-    total_dragons: i32,
-    total_barons: i32,
+    pub total_turrets: i32,
+    pub total_plates: i32,
+    pub total_grubs: i32,
+    pub total_dragons: i32,
+    pub total_barons: i32,
 
-    total_team_damage: i32,
-    total_team_game_time: i32,
-    total_team_gold: i32,
-    total_team_damage_taken: i32,
-    total_team_solo_kills: i32,
-    total_team_kills: i32,
-    total_team_deaths: i32,
-    total_team_assists: i32,
-    total_team_cs: i32,
-    total_team_vs: i32,
+    pub total_team_damage: i32,
+    pub total_team_game_time: i32,
+    pub total_team_gold: i32,
+    pub total_team_damage_taken: i32,
+    pub total_team_solo_kills: i32,
+    pub total_team_kills: i32,
+    pub total_team_deaths: i32,
+    pub total_team_assists: i32,
+    pub total_team_cs: i32,
+    pub total_team_vs: i32,
 
     // cs_diff_10: i64,
     // gold_diff_10: i64,
@@ -103,10 +103,29 @@ impl PlayerStatData {
     }
 }
 
-async fn get_stat(full_name_and_tagline: &String) {
-    // Check if theres a new match available thats not in the cache
-    // run thru each players stats and add in the new values from the new match
-    // add the new match to the cache
+pub async fn get_stats_for_player(full_name_and_tagline: &String) -> CreateEmbed {
+    let riot_id = match get_riot_id_from_string(full_name_and_tagline) {
+        Some(riot_id) => riot_id,
+        None => return get_failure_embed(format!("Incorrectly formatted name"), format!("the name: {} was incorrectly formatted, please double check", full_name_and_tagline))
+    };
+
+    let riot_account = match get_riot_account(riot_id.name.as_str(), riot_id.tagline.as_str()).await {
+        Some(riot_account_data) => riot_account_data,
+        None => return get_failure_embed(format!("Account Not Found"), format!("the name: {} was not found in riot games", full_name_and_tagline))
+    };
+
+
+    match get_player_stat(full_name_and_tagline.clone()).await {
+        None => {
+            CreateEmbed::new()
+                .title(format!("TODO FAILURE"))
+                .description(format!("There was no stats!"))
+                .color(Color::DARK_RED)
+        }
+        Some(player_stats) => {
+            get_player_stat_embed(riot_account, player_stats).await
+        }
+    }
 }
 
 pub async fn full_refresh_stat() {
@@ -236,7 +255,7 @@ pub async fn full_refresh_stat() {
         }
     }
 
-    update_player_stat_in_db(stats).await;
+    delete_and_replace_player_stat_in_db(stats).await;
 }
 
 pub async fn register_game(full_name_and_tagline: &String) -> Option<CreateEmbed> {
@@ -271,7 +290,7 @@ pub async fn register_game(full_name_and_tagline: &String) -> Option<CreateEmbed
 
 }
 
-async fn update_player_stat_in_db(stats: HashMap<String, PlayerStatData>) {
+async fn delete_and_replace_player_stat_in_db(stats: HashMap<String, PlayerStatData>) {
     let mut player_stats = vec![];
     for (puuid, stat_data) in stats {
         if let Some(account) = get_riot_account_by_puuid(&puuid).await {
@@ -305,6 +324,27 @@ async fn update_player_stat_in_db(stats: HashMap<String, PlayerStatData>) {
     }
 }
 
+async fn get_player_stat(riot_full_id: String) -> Option<PlayerStat> {
+    let database = match get_mongo_client().await {
+        Ok(db) => db,
+        Err(err) => {
+            log::error!("An error occurred while trying to get the db: {}", err);
+            return None;
+        }
+    };
+
+    let typed_collection = database.collection::<PlayerStat>(PLAYER_STAT_DB_NAME);
+    let cursor = match typed_collection.find_one(doc! { "riot_full_tag": riot_full_id }, None).await {
+        Ok(stats_cursor) => stats_cursor,
+        Err(err) => {
+            log::error!("An error occurred while trying to find the matches: {}", err);
+            return None;
+        }
+    };
+
+    cursor
+}
+
 async fn add_player_stat_to_db(stat: PlayerStat) -> Option<InsertOneResult> {
     let database_result = get_mongo_client().await;
 
@@ -314,7 +354,7 @@ async fn add_player_stat_to_db(stat: PlayerStat) -> Option<InsertOneResult> {
             collection.insert_one(stat, None).await.ok()
         },
         Err(err) => {
-            log::error!("Error: something went wrong when trying to add a stat match to the DB: {}", err);
+            log::error!("Error: something went wrong when trying to add a inhouse match to the DB: {}", err);
             None
         }
     }
@@ -370,4 +410,3 @@ async fn get_all_inhouse_matches() -> Vec<InhouseMatch> {
 
     return cursor.try_collect().await.unwrap_or_else(|_| vec![]);
 }
-

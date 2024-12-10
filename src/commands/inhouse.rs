@@ -4,13 +4,14 @@ use serenity::all::{CommandInteraction, CommandOptionType, CreateCommandOption, 
 use serenity::builder::{CreateCommand};
 use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
-use crate::commands::business::inhouse::{full_refresh_stat, register_game};
-use crate::commands::inhouse::SubCommand::{REGISTER, STATS};
+use crate::commands::business::inhouse::{full_refresh_stat, get_stats_for_player, register_game};
+use crate::commands::inhouse::SubCommand::{REGISTER, STATS, UPDATE};
 
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 enum SubCommand {
     REGISTER,
+    UPDATE,
     STATS,
 }
 
@@ -29,6 +30,10 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
             command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(match_embed.unwrap())).await.expect("TODO: panic message");
         },
         STATS => {
+            let stat_embed = get_stats_for_player(&command_options.riot_id).await;
+            command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(stat_embed)).await.expect("TODO: panic message");
+        }
+        UPDATE => {
             full_refresh_stat().await;
         }
     }
@@ -70,6 +75,7 @@ fn get_command_options(options: &[ResolvedOption<'_>]) -> CommandOptions {
             let result = match val.to_string().as_str() {
                 "REGISTER" => REGISTER,
                 "STATS" => STATS,
+                "UPDATE" => UPDATE,
                 other => panic!(), // TODO
             };
             result

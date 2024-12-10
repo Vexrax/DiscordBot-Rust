@@ -108,6 +108,15 @@ pub fn get_riot_id_from_string(riot_id: &String) -> Option<RiotId> {
     })
 }
 
+pub async fn is_league_match_cached(match_id: i64) -> bool {
+    let na_match_id = format!("NA1_{}", match_id);
+    let full_league_match = get_full_league_match_from_db(na_match_id.clone()).await;
+    match full_league_match {
+        None => false,
+        Some(_) => true
+    }
+}
+
 // Interface for cache vs riot match fetching
 pub async fn get_league_matches(match_ids: Vec<i64>) -> Vec<Match> {
     let mut matches = vec![];
