@@ -62,9 +62,9 @@ pub async fn get_player_stat_embed(riot_account: Account, player_stat: PlayerSta
     fields.push(("Win Rate".to_string(), build_rate_string(player_stat_data.wins as i64, player_stat_data.games as i64), true));
     fields.push(("KDA".to_string(), format!("{}", (player_stat_data.total_kills + player_stat_data.total_assists) / player_stat_data.total_deaths), true));
 
-    fields.push(("Damage Per Gold".to_string(), "a".to_string(), true));
-    fields.push(("Damage Per Minute".to_string(), "b".to_string(), true));
-    fields.push(("Damage Share".to_string(), "c".to_string(), true));
+    fields.push(("Damage Per Gold".to_string(), format!("{}", player_stat_data.total_damage / player_stat_data.total_gold), true));
+    fields.push(("Damage Per Minute".to_string(), format!("{}", player_stat_data.total_damage / (player_stat_data.total_game_time / 60)) .to_string(), true));
+    fields.push(("Damage Share".to_string(), build_rate_string(player_stat_data.total_damage as i64, player_stat_data.total_team_damage as i64).to_string(), true));
 
     fields.push(("Gold Per Min".to_string(), "a".to_string(), true));
     fields.push(("Gold Share".to_string(), "b".to_string(), true));
