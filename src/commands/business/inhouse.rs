@@ -5,7 +5,7 @@ use mongodb::results::{DeleteResult, InsertOneResult};
 use riven::consts::Team;
 use serde::{Deserialize, Serialize};
 use serenity::all::{Color, CreateEmbed};
-use crate::api::riot_api::{get_riot_account, get_riot_account_by_puuid};
+use crate::api::riot_api::{get_riot_account, get_riot_account_by_puuid, get_summoner};
 use crate::commands::business::embed::{get_db_add_failure_embed, get_embed_for_current_match, get_failure_embed, get_player_stat_embed};
 use crate::commands::business::league_of_legends::{get_current_match_by_riot_account, get_league_matches, get_riot_accounts, get_riot_id_from_string, is_league_match_cached, RiotId};
 use crate::utils::mongo::get_mongo_client;
@@ -115,6 +115,12 @@ pub async fn get_stats_for_player(full_name_and_tagline: &String) -> CreateEmbed
     };
 
 
+    let summoner = match get_summoner(&riot_account).await {
+        Some(summoner_data) => summoner_data,
+        None => { return get_failure_embed(format!("Summoner Not Found"), format!("the name: {} was not found in riot games", full_name_and_tagline));
+        },
+    };
+
     match get_player_stat(full_name_and_tagline.clone()).await {
         None => {
             CreateEmbed::new()
@@ -123,7 +129,7 @@ pub async fn get_stats_for_player(full_name_and_tagline: &String) -> CreateEmbed
                 .color(Color::DARK_RED)
         }
         Some(player_stats) => {
-            get_player_stat_embed(riot_account, player_stats).await
+            get_player_stat_embed(riot_account, player_stats, summoner).await
         }
     }
 }

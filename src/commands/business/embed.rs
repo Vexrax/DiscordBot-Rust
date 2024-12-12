@@ -1,7 +1,7 @@
 use std::fmt::format;
 use std::string::ToString;
 use riven::models::league_v4::LeagueEntry;
-use serenity::all::{Color};
+use serenity::all::{Color, CreateEmbedAuthor};
 use serenity::builder::{CreateEmbed, CreateEmbedFooter};
 use riven::consts::{QueueType, Team, Champion};
 use riven::consts::Division::IV;
@@ -54,13 +54,17 @@ pub async fn get_embed_for_current_match(current_match: &CurrentGameInfo, riot_a
     Some(build_embed_for_current_match(riot_account.clone(), main_player_summoner, match_players, current_match.game_length, current_match.game_id).await)
 }
 
-pub async fn get_player_stat_embed(riot_account: Account, player_stat: PlayerStat) -> CreateEmbed {
+pub async fn get_player_stat_embed(riot_account: Account, player_stat: PlayerStat, riot_summoner: Summoner) -> CreateEmbed {
     let mut fields: Vec<(String, String, bool)> =vec![];
     let player_stat_data = player_stat.player_stat.clone();
 
     fields.push(("Games Played".to_string(), player_stat_data.games.to_string(), true));
     fields.push(("Win Rate".to_string(), build_rate_string(player_stat_data.wins, player_stat_data.games), true));
     fields.push(("KDA".to_string(), format!("{}", (player_stat_data.total_kills + player_stat_data.total_assists) / player_stat_data.total_deaths), true));
+
+    fields.push((" ".to_string(), " ".to_string(), true));
+    fields.push((" ".to_string(), " ".to_string(), true));
+    fields.push((" ".to_string(), " ".to_string(), true));
 
     fields.push(("Damage Per Gold".to_string(), format!("{}", build_per_game_string(player_stat_data.total_damage, player_stat_data.total_gold)), true)); // todo function name is off here
     fields.push(("Damage Per Minute".to_string(), format!("{}", player_stat_data.total_damage / game_time_to_min(player_stat_data.total_game_time)) .to_string(), true));
@@ -69,6 +73,10 @@ pub async fn get_player_stat_embed(riot_account: Account, player_stat: PlayerSta
     fields.push(("Gold Per Min".to_string(), format!("{}", player_stat_data.total_gold / game_time_to_min(player_stat_data.total_game_time)), true));
     fields.push(("Gold Share".to_string(),  build_rate_string(player_stat_data.total_gold, player_stat_data.total_team_gold).to_string(), true));
     fields.push(("Death Share".to_string(),  build_rate_string(player_stat_data.total_deaths, player_stat_data.total_team_deaths).to_string(), true));
+
+    fields.push((" ".to_string(), " ".to_string(), true));
+    fields.push((" ".to_string(), " ".to_string(), true));
+    fields.push((" ".to_string(), " ".to_string(), true));
 
     fields.push(("Average Grubs".to_string(), format!("{}", build_per_game_string(player_stat_data.total_grubs, player_stat_data.games)), true));
     fields.push(("Average Drags".to_string(), format!("{}",  build_per_game_string(player_stat_data.total_dragons, player_stat_data.games)), true));
@@ -83,11 +91,15 @@ pub async fn get_player_stat_embed(riot_account: Account, player_stat: PlayerSta
     fields.push(("Vision Score Per Min".to_string(), format!("{}", player_stat_data.total_vs / game_time_to_min(player_stat_data.total_game_time)).to_string(), true));
 
 
+    let profile_url = get_profile_icon_url(riot_summoner.profile_icon_id).await;
     let embed = CreateEmbed::new()
-        .title(format!("{}'s Inhouse Stats", riot_account.game_name.unwrap_or_default()))
+        .author(CreateEmbedAuthor::new(format!("{}'s Inhouse Stats", riot_account.game_name.unwrap_or_default()))
+            .url(&profile_url)
+            .icon_url(&profile_url)
+        )
         .description(format!("Last Updated At: {}", player_stat.created_at))
         // .footer(CreateEmbedFooter::new(&format!("Stats ")))
-        // .thumbnail(get_profile_icon_url(main_player_summoner.profile_icon_id).await)
+        .thumbnail(profile_url)
         .color(Color::DARK_ORANGE)
         .fields(fields.into_iter());
     return embed;
