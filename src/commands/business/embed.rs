@@ -59,29 +59,34 @@ pub async fn get_player_stat_embed(riot_account: Account, player_stat: PlayerSta
     let player_stat_data = player_stat.player_stat.clone();
 
     fields.push(("Games Played".to_string(), player_stat_data.games.to_string(), true));
-    fields.push(("Win Rate".to_string(), build_rate_string(player_stat_data.wins as i64, player_stat_data.games as i64), true));
+    fields.push(("Win Rate".to_string(), build_rate_string(player_stat_data.wins, player_stat_data.games), true));
     fields.push(("KDA".to_string(), format!("{}", (player_stat_data.total_kills + player_stat_data.total_assists) / player_stat_data.total_deaths), true));
 
-    fields.push(("Damage Per Gold".to_string(), format!("{}", player_stat_data.total_damage / player_stat_data.total_gold), true));
-    fields.push(("Damage Per Minute".to_string(), format!("{}", player_stat_data.total_damage / (player_stat_data.total_game_time / 60)) .to_string(), true));
-    fields.push(("Damage Share".to_string(), build_rate_string(player_stat_data.total_damage as i64, player_stat_data.total_team_damage as i64).to_string(), true));
+    fields.push(("Damage Per Gold".to_string(), format!("{}", build_per_game_string(player_stat_data.total_damage, player_stat_data.total_gold)), true)); // todo function name is off here
+    fields.push(("Damage Per Minute".to_string(), format!("{}", player_stat_data.total_damage / game_time_to_min(player_stat_data.total_game_time)) .to_string(), true));
+    fields.push(("Damage Share".to_string(), build_rate_string(player_stat_data.total_damage, player_stat_data.total_team_damage).to_string(), true));
 
-    fields.push(("Gold Per Min".to_string(), "a".to_string(), true));
-    fields.push(("Gold Share".to_string(), "b".to_string(), true));
-    fields.push(("Death Share".to_string(), "c".to_string(), true));
+    fields.push(("Gold Per Min".to_string(), format!("{}", player_stat_data.total_gold / game_time_to_min(player_stat_data.total_game_time)), true));
+    fields.push(("Gold Share".to_string(),  build_rate_string(player_stat_data.total_gold, player_stat_data.total_team_gold).to_string(), true));
+    fields.push(("Death Share".to_string(),  build_rate_string(player_stat_data.total_deaths, player_stat_data.total_team_deaths).to_string(), true));
 
-    fields.push(("Average Grubs".to_string(), "a".to_string(), true));
-    fields.push(("Average Drags".to_string(), "b".to_string(), true));
-    fields.push(("Average Barons".to_string(), "c".to_string(), true));
+    fields.push(("Average Grubs".to_string(), format!("{}", build_per_game_string(player_stat_data.total_grubs, player_stat_data.games)), true));
+    fields.push(("Average Drags".to_string(), format!("{}",  build_per_game_string(player_stat_data.total_dragons, player_stat_data.games)), true));
+    fields.push(("Average Barons".to_string(), format!("{}",  build_per_game_string(player_stat_data.total_barons, player_stat_data.games)), true));
 
-    fields.push(("Average Turret Plates".to_string(), "a".to_string(), true));
-    fields.push(("Average Solo Kills".to_string(), "b".to_string(), true));
-    fields.push(("Average Vision Score".to_string(), "c".to_string(), true));
+    fields.push(("Average Turret Plates".to_string(), format!("{}", player_stat_data.total_plates / player_stat_data.games), true));
+    fields.push(("Average Solo Kills".to_string(), format!("{}", player_stat_data.total_solo_kills / player_stat_data.games).to_string(), true));
+    fields.push(("Damage Taken Share".to_string(), format!("{}", build_rate_string(player_stat_data.total_damage_taken, player_stat_data.total_team_damage_taken)).to_string(), true));
+
+    fields.push(("Average Vision Score".to_string(), format!("{}", player_stat_data.total_vs / player_stat_data.games).to_string(), true));
+    fields.push(("Vision Share".to_string(), format!("{}", build_rate_string(player_stat_data.total_vs, player_stat_data.total_team_vs)).to_string(), true));
+    fields.push(("Vision Score Per Min".to_string(), format!("{}", player_stat_data.total_vs / game_time_to_min(player_stat_data.total_game_time)).to_string(), true));
+
 
     let embed = CreateEmbed::new()
-        .title(format!("{}'s inhouse stats", riot_account.game_name.unwrap_or_default()))
+        .title(format!("{}'s Inhouse Stats", riot_account.game_name.unwrap_or_default()))
         .description(format!("Last Updated At: {}", player_stat.created_at))
-        .footer(CreateEmbedFooter::new(&format!("TODO")))
+        // .footer(CreateEmbedFooter::new(&format!("Stats ")))
         // .thumbnail(get_profile_icon_url(main_player_summoner.profile_icon_id).await)
         .color(Color::DARK_ORANGE)
         .fields(fields.into_iter());
@@ -122,6 +127,15 @@ async fn build_embed_for_current_match(main_player_riot_account: Account, main_p
     return embed;
 }
 
+fn game_time_to_min(game_time_seconds: i32) -> i32 {
+    return game_time_seconds / 60
+}
+
+fn build_per_game_string(stat: i32, games: i32) -> String {
+    return format!("{:.2}", stat as f64 /games as f64);
+
+}
+
 fn build_champion_string(old: String, player: MatchPlayer) -> String {
     return format!("{}⠀⠀{}\n", old, player.champion_id.identifier().unwrap_or_else(|| "Unknown Champ?"))
 }
@@ -136,8 +150,8 @@ fn build_rank_string(old: String, player: MatchPlayer) -> String {
         .unwrap_or_else(|| "UNRANKED".to_string()));
 }
 
-fn build_rate_string(top: i64, bot: i64) -> String {
-    return format!("{}%", (top/bot) * 100);
+fn build_rate_string(top: i32, bot: i32) -> String {
+    return format!("{:.2}%", (top as f64 /bot as f64) * 100f64);
 }
 
 fn build_compact_string_for_embed(match_players: Vec<MatchPlayer>, formatter_fn: &dyn Fn(String, MatchPlayer) -> String) -> String {
