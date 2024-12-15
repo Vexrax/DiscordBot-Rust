@@ -1,5 +1,6 @@
 use std::fmt::format;
 use std::string::ToString;
+use chrono::{Duration, NaiveDateTime, Utc};
 use riven::models::league_v4::LeagueEntry;
 use serenity::all::{Color, CreateEmbedAuthor};
 use serenity::builder::{CreateEmbed, CreateEmbedFooter};
@@ -58,6 +59,16 @@ pub async fn get_player_stat_embed(riot_account: Account, player_stat: PlayerSta
     let mut fields: Vec<(String, String, bool)> =vec![];
     let player_stat_data = player_stat.player_stat.clone();
 
+    let created_at_human_readable = NaiveDateTime::from_timestamp_opt(player_stat.created_at, 0)
+        .map(|dt| {
+            let created_at = chrono::DateTime::<Utc>::from_utc(dt, Utc);
+            let now = Utc::now();
+            let duration = now - created_at;
+
+            format!("Last updated {}", format_duration(duration))
+        })
+        .unwrap_or_else(|| "Invalid timestamp".to_string());
+
     fields.push(("Games Played".to_string(), player_stat_data.games.to_string(), true));
     fields.push(("Win Rate".to_string(), build_rate_string(player_stat_data.wins, player_stat_data.games), true));
     fields.push(("KDA".to_string(), format!("{}", (player_stat_data.total_kills + player_stat_data.total_assists) / player_stat_data.total_deaths), true));
@@ -94,10 +105,9 @@ pub async fn get_player_stat_embed(riot_account: Account, player_stat: PlayerSta
     let profile_url = get_profile_icon_url(riot_summoner.profile_icon_id).await;
     let embed = CreateEmbed::new()
         .author(CreateEmbedAuthor::new(format!("{}'s Inhouse Stats", riot_account.game_name.unwrap_or_default()))
-            .url(&profile_url)
             .icon_url(&profile_url)
         )
-        .description(format!("Last Updated At: {}", player_stat.created_at))
+        .description(format!("Last Updated: {}", created_at_human_readable))
         // .footer(CreateEmbedFooter::new(&format!("Stats ")))
         .thumbnail(profile_url)
         .color(Color::DARK_ORANGE)
@@ -172,4 +182,23 @@ fn build_compact_string_for_embed(match_players: Vec<MatchPlayer>, formatter_fn:
         build_string = formatter_fn(build_string, player);
     }
     return build_string;
+}
+
+
+// TODO there needs to be a better way
+fn format_duration(duration: Duration) -> String {
+    let seconds = duration.num_seconds();
+    let minutes = duration.num_minutes();
+    let hours = duration.num_hours();
+    let days = duration.num_days();
+
+    if seconds < 60 {
+        format!("{} seconds ago", seconds)
+    } else if minutes < 60 {
+        format!("{} minutes ago", minutes)
+    } else if hours < 24 {
+        format!("{} hours ago", hours)
+    } else {
+        format!("{} days ago", days)
+    }
 }
