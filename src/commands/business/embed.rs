@@ -110,7 +110,7 @@ pub async fn get_player_stat_embed(riot_account: Account, player_stat: PlayerSta
         .description(format!("Last Updated: {}", created_at_human_readable))
         // .footer(CreateEmbedFooter::new(&format!("Stats ")))
         .thumbnail(profile_url)
-        .color(Color::DARK_ORANGE)
+        .color(Color::DARK_GOLD)
         .fields(fields.into_iter());
     return embed;
 }
