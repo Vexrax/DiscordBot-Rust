@@ -137,7 +137,6 @@ pub async fn get_stats_for_player(full_name_and_tagline: &String) -> CreateEmbed
 pub async fn full_refresh_stat() {
     let inhouse_matches = get_all_inhouse_matches().await;
     let mut match_ids = vec![];
-    println!("{:?}", match_ids);
     for inhouse_match in inhouse_matches {
         match_ids.push(inhouse_match.match_id);
     }
