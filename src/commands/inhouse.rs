@@ -6,7 +6,7 @@ use serenity::client::Context;
 use serenity::model::application::ResolvedOption;
 use crate::commands::business::inhouse::{full_refresh_stat, get_stats_for_player, register_game};
 use crate::commands::inhouse::SubCommand::{REGISTER, STATS, UPDATE};
-
+use crate::utils::discord_message::respond_to_interaction;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 enum SubCommand {
@@ -34,6 +34,7 @@ pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &Comman
             command.channel_id.send_message(&ctx.http, CreateMessage::new().tts(false).embed(stat_embed)).await.expect("TODO: panic message");
         }
         UPDATE => {
+            respond_to_interaction(ctx, command, &"Refreshing Stats For inhouses".to_string().to_string()).await;
             full_refresh_stat().await;
         }
     }
