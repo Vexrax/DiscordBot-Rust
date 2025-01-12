@@ -23,14 +23,6 @@ struct MatchPlayer {
     riot_id: RiotId,
 }
 
-pub fn get_live_twitch_embed(user: String, image_url: String, stream_title: String) -> CreateEmbed {
-    CreateEmbed::new()
-        .title(format!("{} went live on twitch", user))
-        .description(format!("{}", stream_title))
-        .url(format!("https://twitch.tv/{}", user))
-        .color(Color::DARK_PURPLE)
-}
-
 pub fn get_failure_embed(title: String, description: String)  -> CreateEmbed {
     CreateEmbed::new()
         .title(format!("{}", title))

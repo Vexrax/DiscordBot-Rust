@@ -1,9 +1,9 @@
 use serenity::all::{ChannelId, Context, CreateMessage};
-use crate::api::twitch::get_twitch_channel_status;
-use crate::commands::business::embed::{get_failure_embed, get_live_twitch_embed};
+use crate::api::twitch::{get_twitch_channel_status, StreamInfo};
+use crate::commands::business::embed::{get_failure_embed};
 
 const STREAM_USERNAMES: [&str; 5] = [
-    "Vexrax_", "koality_player", "helper08", "earleking", "granterino",
+    "Vexrax_", "koality_player", "helper08", "earleking", "corejj",
 ];
 
 const CHANNEL_ID_FOR_STREAM_ANNOUNCEMENT: u64 =  373234281708912643;
@@ -20,8 +20,6 @@ pub async fn check_if_channels_are_live(ctx: &Context) {
     // TODO filter out live_channels, if they have been live for over 10 mins, filter them out
 
     for live_channel in twitch_response.data {
-        let embed = get_live_twitch_embed(live_channel.user_name, live_channel.thumbnail_url, live_channel.title);
-
         let channel = match ctx.http.get_channel(ChannelId::from(CHANNEL_ID_FOR_STREAM_ANNOUNCEMENT)).await {
             Ok(channel) => channel,
             Err(err) => {
@@ -30,12 +28,16 @@ pub async fn check_if_channels_are_live(ctx: &Context) {
             }
         };
 
-        // TODO make this better
-        let _ = channel.id().send_message(&ctx.http, CreateMessage::new().tts(false).embed(embed)).await;
-
+        let _ = channel.id().send_message(&ctx.http, CreateMessage::new().content(format!("A Boosted member is LIVE: https://twitch.tv/{}", &live_channel.user_name))).await;
     }
+}
 
+// TODO function impl
+pub async fn has_posted_about_member_recently(stream_info: StreamInfo) -> bool {
+    return false;
+}
 
-
-    // TODO create embeds
+// TODO function impl
+pub async fn has_channel_been_live_for_atleast_ten_minutes(stream_info: StreamInfo) -> bool {
+    return true;
 }
