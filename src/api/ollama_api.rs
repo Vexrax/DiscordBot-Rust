@@ -46,7 +46,7 @@ pub fn get_host() -> String {
     }.to_string()
 }
 
-pub async fn call_llama3_api_await_response(messages: Vec<OllamaMessage>) -> Option<String> {
+pub async fn call_ollama_api_await_response(messages: Vec<OllamaMessage>) -> Option<String> {
     let source = format!("{}:11434/api/chat", get_host());
 
     let ollama_api_call = OllamaAPICall {

@@ -1,5 +1,5 @@
 use chrono::{NaiveDateTime};
-use crate::api::ollama_api::{call_llama3_api_await_response, OllamaMessage};
+use crate::api::ollama_api::{call_ollama_api_await_response, OllamaMessage};
 
 #[derive(Clone)]
 pub struct ChatLog {
@@ -20,7 +20,6 @@ pub async fn get_summary_of_logs(chat_logs: Vec<ChatLog>, model: Model) -> Optio
     match model {
         Model::GEMMA3 => get_summary_of_logs_gemma(chat_logs).await,
         Model::LLAMA3 => get_summary_of_logs_llama3(chat_logs).await
-
     }
 }
 
@@ -38,7 +37,7 @@ pub async fn get_summary_of_logs_llama3(chat_logs: Vec<ChatLog>) -> Option<Strin
         },
     ];
 
-    return call_llama3_api_await_response(msgs).await;
+    return call_ollama_api_await_response(msgs).await;
 }
 
 pub async fn get_summary_of_logs_gemma(chat_logs: Vec<ChatLog>) -> Option<String> {
@@ -55,7 +54,7 @@ pub async fn get_summary_of_logs_gemma(chat_logs: Vec<ChatLog>) -> Option<String
         },
     ];
 
-    return call_llama3_api_await_response(msgs).await;
+    return call_ollama_api_await_response(msgs).await;
 }
 
 fn convert_chat_logs_to_single_string(chat_logs: Vec<ChatLog>) -> String {

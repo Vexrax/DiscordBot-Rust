@@ -3,7 +3,7 @@ use futures::StreamExt;
 use serenity::all::{ChannelId, Color, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateEmbedFooter, CreateMessage, Message, ResolvedOption, ResolvedValue};
 use serenity::builder::CreateEmbed;
 use crate::utils::discord_message::respond_to_interaction;
-use crate::api::ollama_api::call_llama3_api_await_response;
+use crate::api::ollama_api::call_ollama_api_await_response;
 use crate::commands::business::ollama::{ChatLog, get_summary_of_logs, Model};
 use crate::commands::business::ollama::Model::GEMMA3;
 use crate::utils::discord_message::say_message_in_channel;
