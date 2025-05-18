@@ -16,15 +16,12 @@ pub enum Model {
 }
 
 pub async fn get_summary_of_logs(chat_logs: Vec<ChatLog>, model: Model) -> Option<String> {
+
     match model {
         Model::GEMMA3 => get_summary_of_logs_gemma(chat_logs).await,
         Model::LLAMA3 => get_summary_of_logs_llama3(chat_logs).await
-    }
-}
 
-fn fetch_prompt_by_model() -> String {
-    let md_string: &'static str = include_str!("prompts/summary.md");
-    return md_string.to_string();
+    }
 }
 
 pub async fn get_summary_of_logs_llama3(chat_logs: Vec<ChatLog>) -> Option<String> {
@@ -32,7 +29,7 @@ pub async fn get_summary_of_logs_llama3(chat_logs: Vec<ChatLog>) -> Option<Strin
 
     let msgs: Vec<OllamaMessage> = vec![
         OllamaMessage {
-            content: fetch_prompt_by_model(),
+            content: include_str!("prompts/summary.md").to_string(),
             role: "system".to_string(),
         },
         OllamaMessage {
@@ -49,7 +46,7 @@ pub async fn get_summary_of_logs_gemma(chat_logs: Vec<ChatLog>) -> Option<String
 
     let msgs: Vec<OllamaMessage> = vec![
         OllamaMessage {
-            content: fetch_prompt_by_model(),
+            content: include_str!("prompts/summary.md").to_string(),
             role: "user".to_string(),
         },
         OllamaMessage {
