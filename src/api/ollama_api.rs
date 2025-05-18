@@ -5,29 +5,29 @@ use crate::utils::skynet::get_env;
 use crate::utils::skynet_constants::Environment;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct LlamaMessage {
+pub struct OllamaMessage {
     pub content: String,
     pub role: String
 }
 
 #[derive(Serialize, Deserialize)]
-struct LLamaAPICall {
+struct OllamaAPICall {
     model: String,
-    messages: Vec<LlamaMessage>,
+    messages: Vec<OllamaMessage>,
     stream: bool,
-    options: LLamaAPIOptions
+    options: OllamaAPIOptions
 }
 #[derive(Serialize, Deserialize)]
-struct LLamaAPIOptions {
+struct OllamaAPIOptions {
     seed: Option<i32>,
     temperature: Option<f32>
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct LlamaResponse {
-    model: String,
+struct OllamaResponse {
+    // model: String,
     created_at: String,
-    message: LlamaMessage,
+    message: OllamaMessage,
     done: bool,
     total_duration: u64,
     load_duration: u64,
@@ -37,22 +37,23 @@ struct LlamaResponse {
 }
 
 const LLAMA3_MODEL: &str = "llama3";
+const GEMMA3_MODEL: &str = "gemma3";
 
 pub fn get_host() -> String {
-    return match get_env() {
-        Environment::PROD => "http://10.0.0.11",
-        Environment::DEV => "http://10.0.0.11"
+    match get_env() {
+        Environment::PROD => "http://10.0.0.2",
+        Environment::DEV => "http://10.0.0.2"
     }.to_string()
 }
 
-pub async fn call_llama3_api_await_response(messages: Vec<LlamaMessage>) -> Option<String> {
+pub async fn call_llama3_api_await_response(messages: Vec<OllamaMessage>) -> Option<String> {
     let source = format!("{}:11434/api/chat", get_host());
 
-    let llama_api_call = LLamaAPICall {
-        model: LLAMA3_MODEL.to_string(),
+    let ollama_api_call = OllamaAPICall {
+        model: GEMMA3_MODEL.to_string(),
         messages: messages,
         stream: false,
-        options: LLamaAPIOptions {
+        options: OllamaAPIOptions {
             temperature: Some(1.0),
             seed: None,
         }
@@ -60,26 +61,26 @@ pub async fn call_llama3_api_await_response(messages: Vec<LlamaMessage>) -> Opti
 
     let client = reqwest::Client::new();
     let res = client.post(source)
-        .json(&json!(llama_api_call))
+        .json(&json!(ollama_api_call))
         .send()
         .await;
 
     let serialized_result = match res {
-        Ok(okay_res) => okay_res.json::<LlamaResponse>().await,
+        Ok(okay_res) => okay_res.json::<OllamaResponse>().await,
         Err(err) => {
-            log::error!("Error occurred while calling llama {}", err);
+            log::error!("Error occurred while calling ollama {}", err);
             return None;
         }
     };
 
 
-    let llama_response = match serialized_result {
+    let ollama_response = match serialized_result {
         Ok(ok) => ok,
         Err(err) => {
-            log::error!("Error occurred while calling deserializing from llama {}", err);
+            log::error!("Error occurred while calling deserializing from ollama {}", err);
             return None;
         }
     };
 
-    return Some(llama_response.message.content);
+    return Some(ollama_response.message.content);
 }

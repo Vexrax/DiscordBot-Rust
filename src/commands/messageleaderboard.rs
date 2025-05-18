@@ -45,7 +45,7 @@ pub fn register() -> CreateCommand {
 pub fn build_embed(message_counts_by_user: HashMap<User, u32>, message_counts_by_channel_by_user: HashMap<String, HashMap<User, u32>>) -> CreateEmbed {
 
     let mut message_counts_by_channel =  get_messages_by_channel(message_counts_by_channel_by_user);
-    let mut message_counts_by_channel_sorted: Vec<_> = message_counts_by_channel.into_iter().collect();
+    let mut message_counts_by_channel_sorted: Vec<_> = message_counts_by_channel.clone().into_iter().collect();
     message_counts_by_channel_sorted.sort_by(|a, b| b.1.cmp(&a.1));
 
     let mut message_counts_by_user_sorted: Vec<_> = message_counts_by_user.into_iter().collect();
@@ -77,14 +77,13 @@ pub fn build_embed(message_counts_by_user: HashMap<User, u32>, message_counts_by
         }
     }
 
-
-    return  CreateEmbed::new()
+    return CreateEmbed::new()
         .title(&"Message Leaderboard".to_string())
         .description(&format!("Top {} yappers in boosted", AMOUNT_OF_LEADERBOARD_POSITIONS_TO_DISPLAY_PER_FIELD))
         .color(Color::TEAL)
         .fields(fields.into_iter())
         .thumbnail("https://tr.rbxcdn.com/04c6e20f26515ddbcbc5adaf78ce6f09/420/420/Hat/Png")
-        .footer(CreateEmbedFooter::new(&format!("{} messages in {} channels", message_counts_by_channel.values().sum(), message_counts_by_channel.len())));
+        .footer(CreateEmbedFooter::new(&format!("{} messages in {} channels", "TODO", message_counts_by_channel.len())));
 }
 
 fn get_messages_by_channel(message_counts_by_channel: HashMap<String, HashMap<User, u32>>) -> HashMap<String, u32>{

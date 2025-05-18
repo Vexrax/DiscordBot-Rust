@@ -22,8 +22,8 @@ Once the above commands have been run for the first time you only need to run
 
 ```bash
 docker start ollama
-docker exec -it ollama ollama run llama3
+docker exec -it ollama ollama run gemma3
 curl http://localhost:11434/api/pull -d '{
-  "model": "llama3"
+  "model": "gemma3"
 }'
 ```
