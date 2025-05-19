@@ -26,7 +26,7 @@ struct OllamaAPIOptions {
 #[derive(Serialize, Deserialize, Debug)]
 struct OllamaResponse {
     // model: String,
-    created_at: String,
+    // created_at: String,
     message: OllamaMessage,
     done: bool,
     total_duration: u64,
