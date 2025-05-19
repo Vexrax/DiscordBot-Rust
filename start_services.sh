@@ -20,10 +20,10 @@ fi
 # Wait a bit to ensure ollama is ready
 sleep 2
 
-# Run Ollama with gemma3
-echo "Running Ollama with gemma3 model..."
-docker exec -it ollama ollama run gemma3
+# Pull (download) the Gemma3 model to prepare it without launching an interactive session
+echo "Pulling Gemma3 model..."
+docker exec ollama ollama pull gemma3
 
-# Start docker compose services
-echo "Starting Docker Compose services..."
-docker compose up
+# Build and start Docker Compose services
+echo "Building and starting Docker Compose services..."
+docker compose up --build
