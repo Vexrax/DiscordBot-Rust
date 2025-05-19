@@ -2,6 +2,9 @@
 
 set -e
 
+# === Configurable variables ===
+MODEL="llama4"
+
 # Check if 'ollama' container exists
 if ! docker container inspect ollama > /dev/null 2>&1; then
     echo "Creating and starting Ollama container for the first time..."
@@ -20,10 +23,10 @@ fi
 # Wait a bit to ensure ollama is ready
 sleep 2
 
-# Pull (download) the Gemma3 model to prepare it without launching an interactive session
-echo "Pulling Gemma3 model..."
-docker exec ollama ollama pull llama4
+# Pull (download) the model
+echo "Pulling model: $MODEL"
+docker exec ollama ollama pull "$MODEL"
 
-# Build and start Docker Compose services
+# Start docker compose with build
 echo "Building and starting Docker Compose services..."
 docker compose up --build
