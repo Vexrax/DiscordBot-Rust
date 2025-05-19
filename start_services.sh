@@ -3,7 +3,7 @@
 set -e
 
 # === Configurable variables ===
-MODEL="llama4"
+MODEL="llama3"
 
 # Check if 'ollama' container exists
 if ! docker container inspect ollama > /dev/null 2>&1; then

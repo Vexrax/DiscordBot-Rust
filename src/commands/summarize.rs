@@ -5,7 +5,7 @@ use serenity::builder::CreateEmbed;
 use crate::utils::discord_message::respond_to_interaction;
 use crate::api::ollama_api::call_ollama_api_await_response;
 use crate::commands::business::ollama::{ChatLog, get_summary_of_logs, Model};
-use crate::commands::business::ollama::Model::{GEMMA3, LLAMA4};
+use crate::commands::business::ollama::Model::{GEMMA3, LLAMA3, LLAMA4};
 use crate::utils::discord_message::say_message_in_channel;
 use crate::utils::skynet_constants::SKYNET_USER_ID;
 
@@ -18,7 +18,7 @@ struct CommandParams {
 
 const MAX_HOURS_AGO: i64 = 24 * 3;
 const MAX_MESSAGES: i64 = 200;
-const CURRENT_MODEL: Model = LLAMA4;
+const CURRENT_MODEL: Model = LLAMA3;
 pub async fn run(options: &[ResolvedOption<'_>], ctx: &Context, command: &CommandInteraction) {
     let command_params = get_command_params(options);
     let channel = command_params.channel.unwrap_or_else(|| command.channel_id);

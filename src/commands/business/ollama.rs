@@ -52,7 +52,7 @@ pub async fn get_summary_of_logs_llama3(chat_logs: Vec<ChatLog>) -> Option<Strin
         },
     ];
 
-    return call_ollama_api_await_response(msgs, Model::LLAMA4.to_string()).await;
+    return call_ollama_api_await_response(msgs, Model::LLAMA3.to_string()).await;
 }
 
 pub async fn get_summary_of_logs_gemma(chat_logs: Vec<ChatLog>) -> Option<String> {
