@@ -36,8 +36,6 @@ struct OllamaResponse {
     eval_duration: u64
 }
 
-const LLAMA3_MODEL: &str = "llama3";
-const GEMMA3_MODEL: &str = "gemma3";
 
 pub fn get_host() -> String {
     match get_env() {
@@ -46,11 +44,11 @@ pub fn get_host() -> String {
     }.to_string()
 }
 
-pub async fn call_ollama_api_await_response(messages: Vec<OllamaMessage>) -> Option<String> {
+pub async fn call_ollama_api_await_response(messages: Vec<OllamaMessage>, model: String) -> Option<String> {
     let source = format!("{}:11434/api/chat", get_host());
 
     let ollama_api_call = OllamaAPICall {
-        model: GEMMA3_MODEL.to_string(),
+        model: model,
         messages: messages,
         stream: false,
         options: OllamaAPIOptions {

@@ -1,5 +1,7 @@
 use chrono::{NaiveDateTime};
 use crate::api::ollama_api::{call_ollama_api_await_response, OllamaMessage};
+use std::fmt;
+use crate::commands::business::ollama::Model::{GEMMA3, LLAMA3};
 
 #[derive(Clone)]
 pub struct ChatLog {
@@ -12,14 +14,27 @@ pub struct ChatLog {
 
 pub enum Model {
     GEMMA3,
-    LLAMA3
+    LLAMA3,
+    LLAMA4,
+}
+
+impl fmt::Display for Model {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Model::GEMMA3 => "gemma3",
+            Model::LLAMA3 => "llama3",
+            Model::LLAMA4 => "llama4",
+        };
+        write!(f, "{}", s)
+    }
 }
 
 pub async fn get_summary_of_logs(chat_logs: Vec<ChatLog>, model: Model) -> Option<String> {
 
     match model {
-        Model::GEMMA3 => get_summary_of_logs_gemma(chat_logs).await,
-        Model::LLAMA3 => get_summary_of_logs_llama3(chat_logs).await
+        GEMMA3 => get_summary_of_logs_gemma(chat_logs).await,
+        LLAMA3 => get_summary_of_logs_llama3(chat_logs).await,
+        Model::LLAMA4 => get_summary_of_logs_llama3(chat_logs).await
     }
 }
 
@@ -37,7 +52,7 @@ pub async fn get_summary_of_logs_llama3(chat_logs: Vec<ChatLog>) -> Option<Strin
         },
     ];
 
-    return call_ollama_api_await_response(msgs).await;
+    return call_ollama_api_await_response(msgs, Model::LLAMA4.to_string()).await;
 }
 
 pub async fn get_summary_of_logs_gemma(chat_logs: Vec<ChatLog>) -> Option<String> {
@@ -54,7 +69,7 @@ pub async fn get_summary_of_logs_gemma(chat_logs: Vec<ChatLog>) -> Option<String
         },
     ];
 
-    return call_ollama_api_await_response(msgs).await;
+    return call_ollama_api_await_response(msgs, GEMMA3.to_string()).await;
 }
 
 fn convert_chat_logs_to_single_string(chat_logs: Vec<ChatLog>) -> String {

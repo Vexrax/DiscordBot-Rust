@@ -22,7 +22,7 @@ sleep 2
 
 # Pull (download) the Gemma3 model to prepare it without launching an interactive session
 echo "Pulling Gemma3 model..."
-docker exec ollama ollama pull gemma3
+docker exec ollama ollama pull llama4
 
 # Build and start Docker Compose services
 echo "Building and starting Docker Compose services..."
